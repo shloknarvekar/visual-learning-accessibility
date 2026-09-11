@@ -1,0 +1,196 @@
+{
+  "schema_version": "0.1.0",
+  "id": "example-photosynthesis",
+  "title": "Photosynthesis: How Plants Make Food from Light",
+  "overview": "Photosynthesis is how plants, algae and some bacteria turn light energy into chemical energy stored in sugar. This lesson covers what photosynthesis needs, what it produces, where it happens, and its two main stages.",
+  "source": {
+    "source_type": "pdf",
+    "title": "Biology Notes, Chapter 8: Photosynthesis",
+    "filename": "biology-notes-chapter-8.pdf"
+  },
+  "sections": [
+    {
+      "id": "sec-definition",
+      "type": "concept",
+      "title": "What is photosynthesis?",
+      "source_references": [
+        {
+          "page_number": 1,
+          "excerpt": "Photosynthesis converts light energy into chemical energy stored in glucose."
+        }
+      ],
+      "content": {
+        "term": "Photosynthesis",
+        "definition": "The process in which plants, algae and some bacteria use light energy to make glucose (a sugar) from carbon dioxide and water. Oxygen is released.",
+        "key_points": [
+          "Inputs: carbon dioxide, water and light energy.",
+          "Outputs: glucose and oxygen.",
+          "Balanced equation: 6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂"
+        ]
+      }
+    },
+    {
+      "id": "sec-chloroplast",
+      "type": "explanation",
+      "title": "Where photosynthesis happens",
+      "source_references": [{ "page_number": 2 }],
+      "content": {
+        "body": "Photosynthesis happens inside chloroplasts. Chloroplasts are small structures found mainly in leaf cells. They contain chlorophyll, a green pigment that absorbs light. Chlorophyll absorbs red and blue light well and reflects green light. This is why leaves look green.",
+        "key_points": [
+          "Chloroplasts are where photosynthesis happens.",
+          "Chlorophyll absorbs light energy.",
+          "Leaves look green because chlorophyll reflects green light."
+        ]
+      }
+    },
+    {
+      "id": "sec-stages",
+      "type": "process",
+      "title": "The steps of photosynthesis",
+      "source_references": [
+        {
+          "page_number": 3,
+          "excerpt": "The light-dependent reactions produce ATP and NADPH, which power the Calvin cycle."
+        }
+      ],
+      "content": {
+        "steps": [
+          {
+            "id": "step-absorb-light",
+            "title": "Light is absorbed",
+            "description": "Chlorophyll in the thylakoid membranes of the chloroplast absorbs light energy."
+          },
+          {
+            "id": "step-split-water",
+            "title": "Water is split",
+            "description": "The absorbed energy is used to split water molecules. Oxygen is released as a by-product."
+          },
+          {
+            "id": "step-make-carriers",
+            "title": "Energy carriers are made",
+            "description": "The light-dependent reactions store the energy in two carrier molecules: ATP and NADPH."
+          },
+          {
+            "id": "step-fix-carbon",
+            "title": "Carbon dioxide becomes sugar",
+            "description": "In the stroma, the Calvin cycle uses ATP and NADPH to turn carbon dioxide into sugar."
+          }
+        ]
+      }
+    },
+    {
+      "id": "sec-compare-stages",
+      "type": "comparison",
+      "title": "Light-dependent reactions and the Calvin cycle",
+      "source_references": [{ "page_number": 4 }],
+      "content": {
+        "items": ["Light-dependent reactions", "Calvin cycle"],
+        "rows": [
+          {
+            "criterion": "Where in the chloroplast",
+            "values": ["Thylakoid membranes", "Stroma"]
+          },
+          {
+            "criterion": "Needs light directly",
+            "values": ["Yes", "No"]
+          },
+          {
+            "criterion": "Main inputs",
+            "values": ["Light energy and water", "Carbon dioxide, ATP and NADPH"]
+          },
+          {
+            "criterion": "Main outputs",
+            "values": ["Oxygen, ATP and NADPH", "Sugar (G3P), used to build glucose"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sec-concept-map",
+      "type": "concept_map",
+      "title": "How the parts connect",
+      "source_references": [{ "page_number": 3 }, { "page_number": 4 }],
+      "content": {
+        "summary": "Chlorophyll absorbs light energy. That energy powers the light-dependent reactions, which split water, release oxygen and produce ATP and NADPH. The Calvin cycle uses ATP, NADPH and carbon dioxide to produce glucose.",
+        "nodes": [
+          { "id": "light", "label": "Light energy" },
+          {
+            "id": "chlorophyll",
+            "label": "Chlorophyll",
+            "description": "Green pigment in chloroplasts"
+          },
+          { "id": "water", "label": "Water" },
+          { "id": "light-reactions", "label": "Light-dependent reactions" },
+          { "id": "oxygen", "label": "Oxygen" },
+          { "id": "atp-nadph", "label": "ATP and NADPH" },
+          { "id": "carbon-dioxide", "label": "Carbon dioxide" },
+          { "id": "calvin-cycle", "label": "Calvin cycle" },
+          { "id": "glucose", "label": "Glucose" }
+        ],
+        "edges": [
+          { "from_id": "light", "to_id": "chlorophyll", "label": "is absorbed by" },
+          { "from_id": "chlorophyll", "to_id": "light-reactions", "label": "powers" },
+          { "from_id": "water", "to_id": "light-reactions", "label": "is split in" },
+          { "from_id": "light-reactions", "to_id": "oxygen", "label": "releases" },
+          { "from_id": "light-reactions", "to_id": "atp-nadph", "label": "produces" },
+          { "from_id": "atp-nadph", "to_id": "calvin-cycle", "label": "provide energy to" },
+          { "from_id": "carbon-dioxide", "to_id": "calvin-cycle", "label": "is used by" },
+          { "from_id": "calvin-cycle", "to_id": "glucose", "label": "produces" }
+        ]
+      }
+    },
+    {
+      "id": "sec-example-pondweed",
+      "type": "example",
+      "title": "Example: pondweed under a lamp",
+      "source_references": [{ "page_number": 5 }],
+      "content": {
+        "scenario": "A piece of pondweed is placed in water under a lamp. Small bubbles form on its leaves. When the lamp is moved closer, more bubbles form each minute.",
+        "explanation": "The bubbles are mostly oxygen released by photosynthesis. Moving the lamp closer increases the light intensity, so photosynthesis happens faster. The rate stops increasing when another factor, such as the amount of carbon dioxide, becomes the limit."
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q-oxygen",
+      "type": "multiple_choice",
+      "prompt": "Which gas do plants release during photosynthesis?",
+      "options": [
+        { "id": "a", "text": "Carbon dioxide" },
+        { "id": "b", "text": "Oxygen" },
+        { "id": "c", "text": "Nitrogen" },
+        { "id": "d", "text": "Hydrogen" }
+      ],
+      "correct_option_id": "b",
+      "explanation": "Water is split during the light-dependent reactions. Oxygen is released as a by-product.",
+      "section_ids": ["sec-definition", "sec-stages"]
+    },
+    {
+      "id": "q-calvin-location",
+      "type": "multiple_choice",
+      "prompt": "Where in the chloroplast does the Calvin cycle happen?",
+      "options": [
+        { "id": "a", "text": "Thylakoid membranes" },
+        { "id": "b", "text": "Stroma" },
+        { "id": "c", "text": "Cell wall" }
+      ],
+      "correct_option_id": "b",
+      "explanation": "The Calvin cycle happens in the stroma, the fluid that surrounds the thylakoids.",
+      "section_ids": ["sec-compare-stages"],
+      "source_references": [{ "page_number": 4 }]
+    },
+    {
+      "id": "q-calvin-inputs",
+      "type": "multiple_choice",
+      "prompt": "What does the Calvin cycle use to turn carbon dioxide into sugar?",
+      "options": [
+        { "id": "a", "text": "Oxygen and water" },
+        { "id": "b", "text": "Glucose and light" },
+        { "id": "c", "text": "ATP and NADPH" }
+      ],
+      "correct_option_id": "c",
+      "explanation": "ATP and NADPH are made in the light-dependent reactions. They provide the energy the Calvin cycle needs.",
+      "section_ids": ["sec-stages", "sec-concept-map"]
+    }
+  ]
+}
