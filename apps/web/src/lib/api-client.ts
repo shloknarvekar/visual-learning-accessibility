@@ -96,5 +96,6 @@ export const apiClient = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
     }),
-  getLesson: (lessonId: string) => request<LessonRecord>(`/api/v1/lessons/${encodeURIComponent(lessonId)}`),
+  getLesson: (lessonId: string) =>
+    request<LessonRecord>(`/api/v1/lessons/${encodeURIComponent(lessonId)}`),
 };

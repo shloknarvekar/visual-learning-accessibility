@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
-import { ArrowRight, ArrowUp, Accessibility, BookOpen, BrainCircuit, Layers3 } from 'lucide-react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import * as React from "react";
+import { useEffect, useRef } from "react";
+import { motion } from "motion/react";
+import { ArrowRight, ArrowUp, Accessibility, BookOpen, BrainCircuit, Layers3 } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const marqueeItems = [
-  'VISUAL-FIRST LEARNING',
-  'CONCEPT MAPS',
-  'PROCESS VISUALIZATIONS',
-  'LEARNER-CONTROLLED PACING',
-  'INTERACTIVE PRACTICE',
+  "VISUAL-FIRST LEARNING",
+  "CONCEPT MAPS",
+  "PROCESS VISUALIZATIONS",
+  "LEARNER-CONTROLLED PACING",
+  "INTERACTIVE PRACTICE",
 ];
 
-type FooterTarget = 'home' | 'input' | 'lesson' | 'quiz';
+type FooterTarget = "home" | "input" | "lesson" | "quiz";
 
 type FooterActionProps = {
   onClick: () => void;
@@ -25,7 +25,13 @@ type FooterActionProps = {
   reveal?: boolean;
 };
 
-function FooterAction({ onClick, icon, title, featured = false, reveal = true }: FooterActionProps) {
+function FooterAction({
+  onClick,
+  icon,
+  title,
+  featured = false,
+  reveal = true,
+}: FooterActionProps) {
   return (
     <motion.button
       type="button"
@@ -39,8 +45,8 @@ function FooterAction({ onClick, icon, title, featured = false, reveal = true }:
       whileTap={{ scale: 0.985 }}
       className={`group relative flex min-h-[156px] w-full items-end overflow-hidden rounded-[28px] border p-0 text-left shadow-[0_24px_70px_-34px_rgba(0,0,0,.9)] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5278] focus-visible:ring-offset-2 focus-visible:ring-offset-[#100205] ${
         featured
-          ? 'border-[#ff5278]/35 bg-[linear-gradient(145deg,rgba(180,0,42,.48),rgba(55,0,16,.8))]'
-          : 'border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.025))]'
+          ? "border-[#ff5278]/35 bg-[linear-gradient(145deg,rgba(180,0,42,.48),rgba(55,0,16,.8))]"
+          : "border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.025))]"
       }`}
     >
       <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,82,120,.2),transparent_42%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -52,8 +58,8 @@ function FooterAction({ onClick, icon, title, featured = false, reveal = true }:
           <span
             className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl border ${
               featured
-                ? 'border-[#ff5278]/30 bg-[#ff5278]/15 text-[#ff5278]'
-                : 'border-white/10 bg-white/[.04] text-[#ff5278]'
+                ? "border-[#ff5278]/30 bg-[#ff5278]/15 text-[#ff5278]"
+                : "border-white/10 bg-white/[.04] text-[#ff5278]"
             }`}
           >
             {icon}
@@ -61,7 +67,7 @@ function FooterAction({ onClick, icon, title, featured = false, reveal = true }:
           <span className="min-w-0">
             <span
               className={`block text-[10px] font-semibold uppercase tracking-[.18em] ${
-                featured ? 'text-[#ff5278]' : 'text-white/38'
+                featured ? "text-[#ff5278]" : "text-white/38"
               }`}
             >
               VisuaLearn action
@@ -75,8 +81,8 @@ function FooterAction({ onClick, icon, title, featured = false, reveal = true }:
         <span
           className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border transition-all duration-300 group-hover:translate-x-1 ${
             featured
-              ? 'border-white/20 bg-white text-[#7b001c]'
-              : 'border-white/10 bg-white/[.04] text-white/65 group-hover:border-[#ff5278]/40 group-hover:text-white'
+              ? "border-white/20 bg-white text-[#7b001c]"
+              : "border-white/10 bg-white/[.04] text-white/65 group-hover:border-[#ff5278]/40 group-hover:text-white"
           }`}
         >
           <ArrowRight size={17} />
@@ -91,14 +97,14 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !footerRef.current) return;
+    if (typeof window === "undefined" || !footerRef.current) return;
 
     gsap.registerPlugin(ScrollTrigger);
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
 
     const ctx = gsap.context(() => {
-      const reveals = contentRef.current?.querySelectorAll('[data-footer-reveal]');
+      const reveals = contentRef.current?.querySelectorAll("[data-footer-reveal]");
       if (!reveals?.length) return;
 
       gsap.fromTo(
@@ -109,10 +115,10 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
           opacity: 1,
           stagger: 0.08,
           duration: 0.7,
-          ease: 'power3.out',
+          ease: "power3.out",
           scrollTrigger: {
             trigger: footerRef.current,
-            start: 'top 74%',
+            start: "top 74%",
             once: true,
           },
         },
@@ -124,7 +130,7 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
 
   const go = (target: FooterTarget) => {
     onNavigate?.(target);
-    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 30);
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 30);
   };
 
   return (
@@ -149,7 +155,10 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
 
       <div ref={contentRef} className="relative z-10 mx-auto max-w-6xl py-16 sm:py-20 md:py-24">
         <div>
-          <div data-footer-reveal className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff5278]">
+          <div
+            data-footer-reveal
+            className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#ff5278]"
+          >
             Keep the lesson moving
           </div>
           <h2
@@ -158,23 +167,40 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
           >
             Learning should <span className="text-[#ff5278]">adapt.</span>
           </h2>
-          <p data-footer-reveal className="mt-6 max-w-xl text-base leading-7 text-white/55 sm:text-lg">
-            Bring in the material. Choose the representation. Pause, explore, practice, and come back when the idea needs another shape.
+          <p
+            data-footer-reveal
+            className="mt-6 max-w-xl text-base leading-7 text-white/55 sm:text-lg"
+          >
+            Bring in the material. Choose the representation. Pause, explore, practice, and come
+            back when the idea needs another shape.
           </p>
         </div>
 
         <div className="mt-16 grid gap-4 md:grid-cols-3">
-          <FooterAction featured onClick={() => go('input')} icon={<BookOpen size={18} />} title="Build a visual lesson" />
-          <FooterAction onClick={() => go('lesson')} icon={<BrainCircuit size={18} />} title="Explore Photosynthesis" />
-          <FooterAction onClick={() => go('quiz')} icon={<Layers3 size={18} />} title="Try interactive practice" />
+          <FooterAction
+            featured
+            onClick={() => go("input")}
+            icon={<BookOpen size={18} />}
+            title="Build a visual lesson"
+          />
+          <FooterAction
+            onClick={() => go("lesson")}
+            icon={<BrainCircuit size={18} />}
+            title="Explore Photosynthesis"
+          />
+          <FooterAction
+            onClick={() => go("quiz")}
+            icon={<Layers3 size={18} />}
+            title="Try interactive practice"
+          />
         </div>
 
         <div data-footer-reveal className="mt-8 flex flex-wrap gap-3">
           {(
             [
-              ['Create', 'input'],
-              ['Learn', 'lesson'],
-              ['Practice', 'quiz'],
+              ["Create", "input"],
+              ["Learn", "lesson"],
+              ["Practice", "quiz"],
             ] as const
           ).map(([label, target]) => (
             <button
@@ -202,7 +228,7 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
             <span>No audio required</span>
             <button
               type="button"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="ml-1 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[.03] text-white transition hover:-translate-y-1 hover:border-[#ff5278]/40 hover:bg-[#b4002a]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff5278]"
               aria-label="Back to top"
             >
@@ -214,8 +240,12 @@ export function MotionFooter({ onNavigate }: { onNavigate?: (target: FooterTarge
 
       <style jsx>{`
         @keyframes footer-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
