@@ -9,7 +9,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.ai.factory import create_lesson_generator, resolve_ai_mode
+from app.ai.factory import (
+    create_lesson_generator,
+    create_video_lesson_generator,
+    create_video_uploader,
+    resolve_ai_mode,
+)
 from app.api.router import api_v1_router
 from app.api.routes import health
 from app.core.config import Settings, get_settings
@@ -22,6 +27,7 @@ from app.core.middleware import (
 )
 from app.services.lesson_store import FileLessonStore
 from app.services.pdf_lessons import PdfLessonService
+from app.services.video_lessons import VideoLessonService
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +56,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         generator=create_lesson_generator(settings),
         store=app.state.lesson_store,
     )
+    # Both are None together when providers are configured but none can watch a video; the service
+    # reports that as a capability error rather than failing at start-up, so PDF keeps working.
+    app.state.video_lesson_service = VideoLessonService.from_settings(
+        settings,
+        generator=create_video_lesson_generator(settings),
+        uploader=create_video_uploader(settings),
+        store=app.state.lesson_store,
+    )
 
     register_exception_handlers(app)
-    # Middleware registered later wraps middleware registered earlier.
-    register_upload_size_limit(app, max_upload_mb=settings.max_upload_mb)
+    # Middleware registered later wraps middleware registered earlier. The outer bound is the
+    # largest any endpoint accepts; each endpoint still enforces its own while streaming, which is
+    # what produces the precise message.
+    register_upload_size_limit(app, max_upload_mb=settings.max_any_upload_mb)
     register_request_logging(app)
     app.add_middleware(
         CORSMiddleware,

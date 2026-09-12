@@ -17,6 +17,7 @@ import httpx
 from pydantic import SecretStr, ValidationError
 
 from app.ai.provider import (
+    TEXT_ONLY,
     AIInvalidResponseError,
     AIProviderError,
     AIRateLimitError,
@@ -78,6 +79,9 @@ class OpenAICompatibleProvider:
     ) -> None:
         self.name = name
         self.model_name = model
+        # Chat completions carry text. These services have no way to accept a video the way the
+        # Gemini video path does, and declaring that here is what stops the router from trying.
+        self.modalities = TEXT_ONLY
         self._api_key = api_key
         self._base_url = base_url.rstrip("/")
         self._extra_headers = extra_headers or {}

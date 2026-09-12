@@ -14,6 +14,7 @@ from google.genai.types import HttpOptions, HttpRetryOptions
 from pydantic import BaseModel, ValidationError
 
 from app.ai.provider import (
+    TEXT_AND_VIDEO,
     AIConfigurationError,
     AIInvalidResponseError,
     AIProviderError,
@@ -21,6 +22,7 @@ from app.ai.provider import (
     ModelT,
 )
 from app.core.config import Settings
+from app.models.media import VideoSource
 
 # Bounds a single HTTP attempt, not the whole document: a chunked document makes one call per
 # chunk, and a hang on any one of them raises `AIProviderError` (see the except clause below) and
@@ -32,6 +34,14 @@ from app.core.config import Settings
 # A provider later in the chain gets more patience because failing it early costs more - there is
 # less chain left to still produce a real, if slow, answer. See docs/architecture/overview.md.
 REQUEST_TIMEOUT_SECONDS = 25.0
+
+# Watching a video is a different kind of work from reading a prompt: the model decodes and samples
+# the media before it can answer, and a lecture-length recording legitimately takes minutes. The
+# text deadline above would cut off every real video, so the video path gets its own. It is still a
+# hard wall-clock bound - there is no video fallback provider to move on to, so this is the only
+# thing standing between a stuck request and a hung worker.
+VIDEO_REQUEST_TIMEOUT_SECONDS = 300.0
+
 _HTTP_TOO_MANY_REQUESTS = 429
 
 # JSON Schema keywords Gemini documents as supported for structured output. Anything else (for
@@ -79,6 +89,8 @@ class GeminiProvider:
         self._client = client
         self.name = PROVIDER_NAME
         self.model_name = model
+        # The only provider here that can watch a video as well as read text.
+        self.modalities = TEXT_AND_VIDEO
 
     @classmethod
     def from_settings(
@@ -103,33 +115,67 @@ class GeminiProvider:
     async def generate_structured(
         self, *, instructions: str, input_text: str, output_model: type[ModelT]
     ) -> ModelT:
+        return await self._interact(
+            instructions=instructions,
+            model_input=input_text,
+            output_model=output_model,
+            deadline=REQUEST_TIMEOUT_SECONDS,
+        )
+
+    async def generate_structured_from_video(
+        self, *, instructions: str, input_text: str, video: VideoSource, output_model: type[ModelT]
+    ) -> ModelT:
+        """One call that watches `video` and answers in the same schema as the text path.
+
+        No media bytes travel through this request: Gemini reads the URI itself. For YouTube that
+        is a public watch URL Google resolves; for an upload it is a Files API URI for bytes sent
+        separately. Only documented video fields are set - `uri`, `mime_type` and `processing`.
+        """
+        block: dict[str, Any] = {"type": "video", "uri": video.uri, "processing": video.processing}
+        if video.mime_type is not None:
+            # Omitted for YouTube, where we never see the media and must not guess its type.
+            block["mime_type"] = video.mime_type
+        return await self._interact(
+            instructions=instructions,
+            model_input=[block, {"type": "text", "text": input_text}],
+            output_model=output_model,
+            deadline=VIDEO_REQUEST_TIMEOUT_SECONDS,
+        )
+
+    async def _interact(
+        self, *, instructions: str, model_input: Any, output_model: type[ModelT], deadline: float
+    ) -> ModelT:
+        """One interaction under a hard deadline, with every failure converted at this boundary.
+
+        Shared by the text and video paths so both get the same deadline handling, the same error
+        translation and the same schema validation; they differ only in what `model_input` holds
+        and how long the work is allowed to take.
+        """
         try:
             # Hard wall-clock deadline over the whole call. The SDK's own `timeout` below is
             # handed to httpx as a per-operation budget, whose read clock restarts on every byte
             # received - a service that trickles bytes can outlive it (observed on the
             # OpenAI-compatible providers: a 320s call against a 35s httpx timeout). This bounds
             # the total instead. The SDK is not modified; it is simply run under a deadline.
-            async with asyncio.timeout(REQUEST_TIMEOUT_SECONDS):
+            async with asyncio.timeout(deadline):
                 interaction = await self._client.aio.interactions.create(
                     model=self.model_name,
                     system_instruction=instructions,
-                    input=input_text,
+                    input=model_input,
                     response_format={
                         "type": "text",
                         "mime_type": "application/json",
                         "schema": gemini_response_schema(output_model),
                     },
                     store=False,  # don't keep course material stored for later retrieval
-                    timeout=REQUEST_TIMEOUT_SECONDS,
+                    timeout=deadline,
                 )
         except TimeoutError as exc:
             # Must precede the catch-all below, which would otherwise report this as a generic
             # failure. `asyncio.timeout` turns its own cancellation into `TimeoutError`; an
             # external cancellation stays a `CancelledError` (a `BaseException`) and so is caught
             # by neither clause, keeping shutdown distinct from a provider failure.
-            raise AIProviderError(
-                f"Gemini request exceeded its {REQUEST_TIMEOUT_SECONDS:g}s deadline."
-            ) from exc
+            raise AIProviderError(f"Gemini request exceeded its {deadline:g}s deadline.") from exc
         except Exception as exc:
             # The SDK's error classes live in private modules that move between releases, so this
             # boundary converts every failure. The original exception stays attached as __cause__.

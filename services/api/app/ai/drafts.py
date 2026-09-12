@@ -22,13 +22,36 @@ SectionType = Literal[
 ]
 
 
+# No timestamp was given. Negative rather than None so the draft schema stays inside the JSON
+# Schema subset structured output supports, for the same reason the fields below default to "".
+NO_TIMESTAMP = -1.0
+
+
 class DraftSourceReference(BaseModel):
+    """Where content came from. Which locator applies depends on the input type.
+
+    Both locators are offered to every provider because one `LessonDraft` serves every input type.
+    The prompt says which to fill, and grounding keeps only the locator the input can prove: pages
+    for documents, timestamps for video.
+    """
+
     page_number: int = Field(
-        description='Number from the <page number="..."> tag that contains the supporting text.'
+        description='Documents: number from the <page number="..."> tag that contains the '
+        "supporting text. Video: use 0 and give timestamps instead."
+    )
+    start_time_seconds: float = Field(
+        default=NO_TIMESTAMP,
+        description="Video: seconds from the start of the video where this content begins. "
+        "Documents: leave unset.",
+    )
+    end_time_seconds: float = Field(
+        default=NO_TIMESTAMP,
+        description="Video: seconds where this content ends; never before start_time_seconds. "
+        "Documents: leave unset.",
     )
     excerpt: str = Field(
         default="",
-        description="A short quote (at most 25 words) copied exactly from that page, or empty.",
+        description="A short quote (at most 25 words) copied exactly from the source, or empty.",
     )
 
 
@@ -155,5 +178,11 @@ class DraftQuizQuestion(BaseModel):
 class LessonDraft(BaseModel):
     title: str
     overview: str = Field(description="Two to four plain sentences on what the lesson covers.")
+    subject: str = Field(
+        default="",
+        description="The single academic subject this material best fits: biology, mathematics, "
+        "physics, chemistry, history, computer_science, geography, or general if none of those "
+        "clearly fit. Leave empty if unsure.",
+    )
     sections: list[DraftSection]
     quiz: list[DraftQuizQuestion]

@@ -626,6 +626,19 @@ def test_ai_mode_generates_validates_stores_and_serves_a_grounded_lesson(
     assert any("moved to the right page" in warning for warning in metadata["warnings"])
     assert '<page number="2">' in provider.calls[0]["input_text"]
     assert fetched.json() == body
+    # _draft() supplies no subject, matching a provider that did not confidently guess one.
+    assert body["lesson"]["subject"] == "general"
+
+
+def test_a_confidently_supplied_subject_propagates_through_the_pdf_endpoint(
+    settings: Settings,
+) -> None:
+    draft = _draft().model_copy(update={"subject": "physics"})
+
+    with _ai_client(settings, FakeProvider([draft])) as client:
+        response = _upload(client, make_pdf(PAGES))
+
+    assert response.json()["lesson"]["subject"] == "physics"
 
 
 @pytest.mark.parametrize(

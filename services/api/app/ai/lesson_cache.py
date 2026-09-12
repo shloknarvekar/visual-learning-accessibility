@@ -16,10 +16,14 @@ from app.schemas.lesson import Lesson
 logger = logging.getLogger(__name__)
 
 
+def content_cache_key(material: str) -> str:
+    """Stable key for any string identifying source material. Same string, same key."""
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 def document_cache_key(document: ExtractedDocument) -> str:
     """Stable key for a document's extracted text. Same text, same key."""
-    text = "\n\n".join(page.text for page in document.pages)
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return content_cache_key("\n\n".join(page.text for page in document.pages))
 
 
 class LessonCache(Protocol):
