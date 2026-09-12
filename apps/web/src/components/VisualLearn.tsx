@@ -45,7 +45,7 @@ function useTypewriter(text: string, speed = 38, startDelay = 600) {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | undefined;
+    let interval: number | undefined;
     const timeout = window.setTimeout(() => {
       let index = 0;
       interval = window.setInterval(() => {
@@ -165,7 +165,7 @@ function useHeroInteraction(
 const pageFade = {
   initial: { opacity: 0, y: 14 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease } },
-  exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: 'easeOut' } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: 'easeOut' as const } },
 };
 
 export default function VisualLearn() {
@@ -376,7 +376,22 @@ export default function VisualLearn() {
   );
 }
 
-function CreateView({ source, setSource, url, setUrl, file, setFile, error, setError, inputRef, lessonMode, begin, goHome }: any) {
+type CreateViewProps = {
+  source: 'youtube' | 'pdf';
+  setSource: React.Dispatch<React.SetStateAction<'youtube' | 'pdf'>>;
+  url: string;
+  setUrl: React.Dispatch<React.SetStateAction<string>>;
+  file: File | null;
+  setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  error: string;
+  setError: React.Dispatch<React.SetStateAction<string>>;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  lessonMode: LessonMode;
+  begin: () => void;
+  goHome: () => void;
+};
+
+function CreateView({ source, setSource, url, setUrl, file, setFile, error, setError, inputRef, lessonMode, begin, goHome }: CreateViewProps) {
   const activeMode = source === 'youtube' ? 'concepts' : 'process';
 
   return (
@@ -470,7 +485,15 @@ function CreateView({ source, setSource, url, setUrl, file, setFile, error, setE
   );
 }
 
-function ProcessingView({ stage, lessonMode, apiPending, apiMessage, goHome }: any) {
+type ProcessingViewProps = {
+  stage: number;
+  lessonMode: LessonMode;
+  apiPending: boolean;
+  apiMessage: string;
+  goHome: () => void;
+};
+
+function ProcessingView({ stage, lessonMode, apiPending, apiMessage, goHome }: ProcessingViewProps) {
   const steps = ['Reading your content','Understanding key concepts','Structuring the lesson','Preparing visual explanations','Creating practice questions'];
   return <motion.div key="processing" {...pageFade} className="min-h-screen bg-[#faf7f2] text-[#24161b]"><section className="px-5 pb-12 pt-32 sm:px-8 md:px-10"><div className="mx-auto max-w-7xl"><div className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#7b001c]">02 · Processing</div><div className="mt-4 grid gap-8 lg:grid-cols-[1fr_.72fr] lg:items-end"><div><RotatingHeadline prefix="Turning material into" words={['structure.','relationships.','visuals.','practice.']}/><p className="mt-5 max-w-2xl text-lg leading-7 text-[#5f6066]">No fake percentage. Just visible stages that explain what the interface is doing while the lesson takes shape.</p></div><MiniFan labels={['READ','MAP','BUILD']}/></div></div></section><section className="bg-[#130307] px-5 py-16 text-white sm:px-8 md:px-10 md:py-20"><div className="mx-auto max-w-7xl"><div className="flex flex-wrap items-center justify-between gap-4"><div><div className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff5278]">Pipeline status</div><h2 className="mt-2 text-3xl font-semibold tracking-tight">The lesson is assembling.</h2></div><div className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1.5 text-xs uppercase tracking-[.18em] text-white/55">{lessonMode==='live'?'Live API':lessonMode==='fallback'?'Fallback':'Demo mode'}</div></div>{apiMessage&&<div role="status" className="mt-5 rounded-2xl border border-[#ff5278]/25 bg-[#ff5278]/10 p-4 text-sm text-white/75">{apiMessage}</div>}<div className="mt-10 grid gap-3 md:grid-cols-5">{steps.map((label:string,index:number)=><motion.div key={label} initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{delay:index*.08,duration:.55,ease}} className={`relative overflow-hidden rounded-[22px] border p-5 ${stage>index?'border-[#ff5278]/35 bg-[#ff5278]/10':stage===index?'border-white/15 bg-white/[.07]':'border-white/10 bg-white/[.025]'}`}>{stage===index&&apiPending&&<motion.div className="pointer-events-none absolute inset-y-0 left-[-40%] w-2/3 bg-gradient-to-r from-transparent via-[#ff5278]/20 to-transparent" animate={{x:['0%','220%']}} transition={{duration:1.4,repeat:Infinity,ease:'linear'}}/>}<div className="relative"><div className="text-[10px] font-semibold uppercase tracking-[.18em] text-white/35">0{index+1}</div><div className="mt-4 text-lg font-semibold">{label}</div><div className="mt-2 text-xs text-white/40">{stage>index?'Done':stage===index?'Working':'Queued'}</div></div></motion.div>)}</div><div className="mt-10"><MiniFan labels={['CONTENT','CONCEPTS','QUESTIONS']} dark/></div></div></section><SignalBand title="The output is more than captions." text="The finished lesson can move between explanation, relationships, diagrams and practice without becoming a wall of text."><MiniFan labels={['EXPLAIN','CONNECT','PRACTICE']} dark={false}/></SignalBand><CompactFooter onBackHome={goHome}/></motion.div>;
 }
@@ -499,7 +522,22 @@ function getSectionSummary(section: Section): string {
   }
 }
 
-function LessonView({ lesson, current, activeSection, setActiveSection, lessonMode, highContrast, setHighContrast, goHome, onQuiz, lessonId }: any) {
+type SectionContentWithKeyPoints = { key_points?: string[] };
+
+type LessonViewProps = {
+  lesson: Lesson;
+  current: Section;
+  activeSection: number;
+  setActiveSection: React.Dispatch<React.SetStateAction<number>>;
+  lessonMode: LessonMode;
+  highContrast: boolean;
+  setHighContrast: React.Dispatch<React.SetStateAction<boolean>>;
+  goHome: () => void;
+  onQuiz: () => void;
+  lessonId: string | null;
+};
+
+function LessonView({ lesson, current, activeSection, setActiveSection, lessonMode, highContrast, setHighContrast, goHome, onQuiz, lessonId }: LessonViewProps) {
   const visualization = adaptSectionToVisualization(current as Section, 'biology');
   const modeLabel = lessonMode === 'live' ? 'LIVE' : lessonMode === 'fallback' ? 'FALLBACK' : lessonMode === 'cached' ? 'CACHED' : 'DEMO';
   return <motion.div key="lesson" {...pageFade} className="min-h-screen bg-[#faf7f2] text-[#24161b]">
@@ -538,7 +576,7 @@ function LessonView({ lesson, current, activeSection, setActiveSection, lessonMo
               <h2 className="mt-5 text-4xl font-semibold tracking-[-.045em] sm:text-5xl">{current.title}</h2>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-[#5f6066]">{getSectionSummary(current as Section)}</p>
 
-              {'key_points' in current.content && Array.isArray((current.content as any).key_points) && <div className="mt-8 grid gap-3 sm:grid-cols-2">{((current.content as any).key_points as string[]).map((bullet:string,i:number)=><motion.div key={bullet} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.06}} className="rounded-2xl border border-[#7b001c]/10 bg-[#faf7f2] p-4 text-sm leading-6"><Check className="mb-2 text-[#b4002a]" size={17}/>{bullet}</motion.div>)}</div>}
+              {'key_points' in current.content && Array.isArray((current.content as SectionContentWithKeyPoints).key_points) && <div className="mt-8 grid gap-3 sm:grid-cols-2">{((current.content as SectionContentWithKeyPoints).key_points as string[]).map((bullet:string,i:number)=><motion.div key={bullet} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{delay:i*.06}} className="rounded-2xl border border-[#7b001c]/10 bg-[#faf7f2] p-4 text-sm leading-6"><Check className="mb-2 text-[#b4002a]" size={17}/>{bullet}</motion.div>)}</div>}
 
               {visualization ? <div className="mt-8 overflow-hidden rounded-[26px] border border-[#7b001c]/12 bg-[#f7f1eb] p-2 sm:p-3"><div className="rounded-[20px] bg-white p-3 sm:p-4"><VisualizationRenderer data={visualization} subject="biology" /></div></div> : <div className="mt-8 rounded-[26px] border border-dashed border-[#7b001c]/15 bg-[#faf7f2] p-6 text-sm leading-6 text-[#5f6066]">{current.type === 'explanation' ? current.content.body : current.type === 'example' ? <><strong className="text-[#24161b]">Scenario:</strong> {current.content.scenario}<br/><br/><strong className="text-[#24161b]">Why it matters:</strong> {current.content.explanation}</> : 'This section is presented as structured text so the same content remains accessible even without a visualization.'}</div>}
 
@@ -563,7 +601,18 @@ function LessonView({ lesson, current, activeSection, setActiveSection, lessonMo
   </motion.div>;
 }
 
-function QuizView({ lesson, question, answer, score, progress, choose, next, goHome }: any) {
+type QuizViewProps = {
+  lesson: Lesson;
+  question: number;
+  answer: number | null;
+  score: number;
+  progress: number;
+  choose: (index: number) => void;
+  next: () => void;
+  goHome: () => void;
+};
+
+function QuizView({ lesson, question, answer, score, progress, choose, next, goHome }: QuizViewProps) {
   const item = lesson.quiz[question];
   return (
     <motion.div key="quiz" {...pageFade} className="min-h-screen bg-[#faf7f2] text-[#24161b]">
@@ -596,7 +645,7 @@ function QuizView({ lesson, question, answer, score, progress, choose, next, goH
             <AnimatePresence mode="wait">
               <motion.div key={question} initial={{ opacity: 0, x: 24, filter: 'blur(5px)' }} animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, x: -24, filter: 'blur(5px)' }} transition={{ duration: .42, ease }}>
                 <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-white/55">Question {String(question + 1).padStart(2, '0')}</div>
-                <h3 className="mt-4 max-w-3xl text-2xl font-semibold leading-tight text-white sm:text-3xl">{item.question}</h3>
+                <h3 className="mt-4 max-w-3xl text-2xl font-semibold leading-tight text-white sm:text-3xl">{item.prompt}</h3>
 
                 <div className="mt-7 grid gap-3">
                   {item.options.map((option: { id: string; text: string }, index: number) => {
@@ -656,7 +705,17 @@ function QuizView({ lesson, question, answer, score, progress, choose, next, goH
   );
 }
 
-function AccessibilityView({ highContrast, setHighContrast, largeText, setLargeText, reduceMotion, setReduceMotion, goHome }: any) {
+type AccessibilityViewProps = {
+  highContrast: boolean;
+  setHighContrast: React.Dispatch<React.SetStateAction<boolean>>;
+  largeText: boolean;
+  setLargeText: React.Dispatch<React.SetStateAction<boolean>>;
+  reduceMotion: boolean;
+  setReduceMotion: React.Dispatch<React.SetStateAction<boolean>>;
+  goHome: () => void;
+};
+
+function AccessibilityView({ highContrast, setHighContrast, largeText, setLargeText, reduceMotion, setReduceMotion, goHome }: AccessibilityViewProps) {
   return (
     <motion.div key="accessibility" {...pageFade} className="min-h-screen bg-[#faf7f2] text-[#24161b]">
       <section className="px-5 pb-14 pt-32 sm:px-8 md:px-10">
@@ -706,15 +765,39 @@ function AccessibilityView({ highContrast, setHighContrast, largeText, setLargeT
   );
 }
 
-function AccessibilityCard({ title, eyebrow, icon, active, onClick, description, action }: any) {
+type AccessibilityCardProps = {
+  title: string;
+  eyebrow: string;
+  icon: ReactNode;
+  active: boolean;
+  onClick: () => void;
+  description: string;
+  action: string;
+};
+
+function AccessibilityCard({ title, eyebrow, icon, active, onClick, description, action }: AccessibilityCardProps) {
   return <motion.button type="button" whileHover={{ y: -5 }} whileTap={{ scale: .99 }} onClick={onClick} className={`text-left rounded-[28px] border p-6 shadow-[0_18px_55px_rgba(70,0,18,.06)] transition ${active ? 'border-[#b4002a]/30 bg-[#fff0f3]' : 'border-[#7b001c]/12 bg-white hover:border-[#b4002a]/25'}`}><div className="flex items-center justify-between"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#fff0f3] text-[#b4002a]">{icon}</span><span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[.16em] ${active ? 'bg-[#b4002a] text-white' : 'bg-[#f4eee8] text-[#5f6066]'}`}>{active ? 'On' : 'Off'}</span></div><div className="mt-6 text-[10px] font-semibold uppercase tracking-[.18em] text-[#7b001c]">{eyebrow}</div><div className="mt-2 text-xl font-semibold">{title}</div><p className="mt-2 text-sm leading-6 text-[#5f6066]">{description}</p><div className="mt-5 inline-flex rounded-full border border-[#7b001c]/12 bg-[#faf7f2] px-4 py-2 text-xs font-semibold">{action}</div></motion.button>;
 }
 
-function SettingRow({ label, value, onClick }: any) {
+type SettingRowProps = {
+  label: string;
+  value: boolean;
+  onClick: () => void;
+};
+
+function SettingRow({ label, value, onClick }: SettingRowProps) {
   return <button type="button" onClick={onClick} className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[.035] px-4 py-3 text-left hover:border-[#ff5278]/40"><span className="text-sm font-medium text-white">{label}</span><span className={`relative h-6 w-11 rounded-full transition ${value ? 'bg-[#ff5278]' : 'bg-white/15'}`}><span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${value ? 'left-6' : 'left-1'}`} /></span></button>;
 }
 
-function ResultView({ lesson, score, retry, goLesson, goHome }: any) {
+type ResultViewProps = {
+  lesson: Lesson;
+  score: number;
+  retry: () => void;
+  goLesson: () => void;
+  goHome: () => void;
+};
+
+function ResultView({ lesson, score, retry, goLesson, goHome }: ResultViewProps) {
   return <motion.div key="result" {...pageFade} className="min-h-screen bg-[#faf7f2] text-[#24161b]"><section className="px-5 pb-14 pt-32 sm:px-8 md:px-10"><div className="mx-auto max-w-7xl text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#fff0f3] text-[#b4002a]"><Trophy size={28}/></div><div className="mt-6 text-[10px] font-semibold uppercase tracking-[.2em] text-[#7b001c]">05 · Result</div><RotatingHeadline prefix="You made the idea" words={['click.','stick.','visible.','yours.']}/><p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#5f6066] sm:text-lg">A result should tell you what happened and make the next step obvious.</p><MiniFan labels={['SCORE','INSIGHT','NEXT STEP']}/></div></section><section className="bg-[#130307] px-5 py-16 text-white sm:px-8 md:px-10 md:py-20"><div className="mx-auto max-w-5xl"><div className="grid gap-4 md:grid-cols-[1.25fr_.75fr]"><div className="rounded-[30px] border border-white/10 bg-white/[.04] p-7 md:p-9"><div className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#ff5278]">Practice complete</div><div className="mt-4 flex items-end gap-3"><div className="text-7xl font-semibold tracking-[-.07em]">{score}</div><div className="pb-3 text-xl text-white/35">/ {lesson.quiz.length}</div></div><p className="mt-3 max-w-xl text-white/50">Use the score to decide whether to retry, revisit a section, or move on.</p><div className="mt-7 grid gap-3 sm:grid-cols-3"><ResultStat n={`${Math.round(score/lesson.quiz.length*100)}%`} t="Score"/><ResultStat n={`${lesson.quiz.length}`} t="Questions"/><ResultStat n="Visual" t="Mode"/></div></div><div className="rounded-[30px] border border-[#ff5278]/20 bg-[linear-gradient(145deg,rgba(180,0,42,.34),rgba(255,255,255,.035))] p-7"><Sparkles className="text-[#ff5278]"/><div className="mt-4 text-xl font-semibold">Choose what happens next.</div><div className="mt-5 grid gap-2"><button type="button" onClick={retry} className="rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-left text-sm transition hover:-translate-y-0.5 hover:border-[#ff5278]/45">Retry practice</button><button type="button" onClick={goLesson} className="rounded-2xl border border-white/10 bg-white/[.04] px-4 py-3 text-left text-sm transition hover:-translate-y-0.5 hover:border-[#ff5278]/45">Revisit the lesson</button><button type="button" onClick={goHome} className="rounded-2xl bg-white px-4 py-3 text-left text-sm font-semibold text-[#130307] transition hover:-translate-y-0.5">Back to VisuaLearn</button></div></div></div></div></section><SignalBand title="Learning should adapt." text="The end of one practice loop is the beginning of the next representation."><MiniFan labels={['REVIEW','RETRY','MOVE ON']} dark/></SignalBand><CompactFooter onBackHome={goHome}/></motion.div>;
 }
 

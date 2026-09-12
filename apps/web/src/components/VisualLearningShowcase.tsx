@@ -187,12 +187,12 @@ export function VisualLearningShowcase({ onOpenLesson, onOpenPractice }: { onOpe
 
               <div className="space-y-4">
                 {[
-                  ['01', 'Bring the material in', 'YouTube, PDF or notes become the starting point — not the final format.', <Play size={18}/>],
-                  ['02', 'Structure the meaning', 'Key concepts, entities, examples and relationships become navigable pieces.', <Layers3 size={18}/>],
-                  ['03', 'See the system', 'Concept maps and process views expose what connects to what.', <Network size={18}/>],
-                  ['04', 'Try it yourself', 'Practice questions reveal whether the idea actually clicked.', <CircleHelp size={18}/>],
+                  ['01', 'Bring the material in', 'YouTube, PDF or notes become the starting point — not the final format.', <Play size={18} key="icon-01"/>],
+                  ['02', 'Structure the meaning', 'Key concepts, entities, examples and relationships become navigable pieces.', <Layers3 size={18} key="icon-02"/>],
+                  ['03', 'See the system', 'Concept maps and process views expose what connects to what.', <Network size={18} key="icon-03"/>],
+                  ['04', 'Try it yourself', 'Practice questions reveal whether the idea actually clicked.', <CircleHelp size={18} key="icon-04"/>],
                 ].map(([num, title, text, icon], i) => (
-                  <motion.div key={num} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .22 }} transition={{ delay: i * .07, duration: .5, ease }} whileHover={{ x: 5 }} className="group rounded-[26px] border border-[#7b001c]/10 bg-white p-5 shadow-[0_14px_40px_rgba(90,0,20,.05)] sm:p-7">
+                  <motion.div key={String(num)} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .22 }} transition={{ delay: i * .07, duration: .5, ease }} whileHover={{ x: 5 }} className="group rounded-[26px] border border-[#7b001c]/10 bg-white p-5 shadow-[0_14px_40px_rgba(90,0,20,.05)] sm:p-7">
                     <div className="flex items-start gap-4"><div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#fff0f3] text-[#7b001c] transition group-hover:scale-105">{icon}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-4"><span className="text-[10px] font-semibold tracking-[.2em] text-[#7b001c]/45">{num}</span><span className="text-xs text-[#9d8f95]">{i + 1 === 4 ? 'understanding' : 'next layer'}</span></div><h3 className="mt-3 text-xl font-semibold tracking-[-.03em] sm:text-2xl">{title}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-[#656069] sm:text-base">{text}</p></div></div>
                   </motion.div>
                 ))}
@@ -206,7 +206,7 @@ export function VisualLearningShowcase({ onOpenLesson, onOpenPractice }: { onOpe
             <div className="grid gap-0 lg:grid-cols-[1fr_.8fr]">
               <div className="p-7 sm:p-10 md:p-12">
                 <div className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#7b001c]">Practice, but make it visual</div>
-                <h2 className="mt-4 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">The answer isn't the end. The feedback is part of the lesson.</h2>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-.04em] sm:text-4xl">The answer isn&apos;t the end. The feedback is part of the lesson.</h2>
                 <p className="mt-4 max-w-xl text-sm leading-6 text-[#5f6066] sm:text-base">Learners can choose an option, see why it is right or wrong, and return to the visual representation that explains the idea.</p>
                 <div className="mt-8 space-y-3">
                   {['Glucose stores chemical energy.', 'Oxygen is a byproduct.', 'Water is an input.'].map((option, i) => (
@@ -222,7 +222,7 @@ export function VisualLearningShowcase({ onOpenLesson, onOpenPractice }: { onOpe
 
         <section className="bg-[#7b001c] px-5 py-20 text-white sm:px-8 md:px-10 md:py-28">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .3 }} transition={{ duration: .6, ease }} className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div><div className="text-[10px] font-semibold uppercase tracking-[.2em] text-white/50">Next stop: your material</div><h2 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-.05em] sm:text-5xl md:text-6xl">Bring the lecture. We'll change the way you can see it.</h2></div>
+            <div><div className="text-[10px] font-semibold uppercase tracking-[.2em] text-white/50">Next stop: your material</div><h2 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-.05em] sm:text-5xl md:text-6xl">Bring the lecture. We&apos;ll change the way you can see it.</h2></div>
             <button onClick={onOpenLesson} className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#7b001c] transition hover:-translate-y-1 hover:bg-[#fff4f6]">Open a visual lesson <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></button>
           </motion.div>
         </section>
