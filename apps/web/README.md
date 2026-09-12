@@ -1,27 +1,31 @@
-# VisuaLearn web frontend
+# Web app (`apps/web`)
 
-This is the student-facing frontend for the Visual Learning Accessibility monorepo.
+Next.js (App Router, TypeScript, Tailwind CSS) student-facing frontend.
+Owners: Person 2 (pages, UX, accessibility) and Person 3 (visual renderers, integration).
+See [team boundaries](../../docs/development/team-boundaries.md).
 
-## Run
-
-From the repository root:
-
-```bash
-npm install
-npm run dev:web
+```text
+src/
+  app/                 routes, root layout, global styles
+  components/
+    layout/            site header and footer
+    upload/            upload workflow (placeholder)
+    lesson/            lesson presentation
+    status/            API connectivity indicator
+  lib/
+    config.ts          public environment configuration
+    api-client.ts      typed client for the FastAPI service
 ```
 
-The frontend reads the backend URL from `apps/web/.env.local`:
+Lesson data types come from `@visual-learning/contracts` (`packages/contracts`). Use
+`photosynthesisExampleLesson` to build UI before the API can generate lessons.
 
-```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-```
+Run from the repository root:
 
-The PDF lesson flow connects to the existing contract:
+| Task                               | Command             |
+| ---------------------------------- | ------------------- |
+| Dev server (http://localhost:3000) | `npm run dev:web`   |
+| Lint                               | `npm run lint:web`  |
+| Production build                   | `npm run build:web` |
 
-- `POST /api/v1/lessons/pdf`
-- `GET /api/v1/lessons/{lesson_id}`
-
-The lesson page renders `@visual-learning/contracts` data through the existing `VisualizationRenderer` + adapters. No backend or contract code is changed by the frontend.
-
-The YouTube input remains present in the UI for the MVP experience, but the checked-in API reference currently exposes PDF lesson creation and lesson retrieval only; the frontend therefore keeps YouTube in demo/staged mode rather than inventing a new endpoint.
+Configuration: copy `.env.example` to `.env.local`.
