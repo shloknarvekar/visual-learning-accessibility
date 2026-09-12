@@ -11,6 +11,12 @@ Base URL in local development: `http://localhost:8000` (`NEXT_PUBLIC_API_BASE_UR
 
 ## Endpoints
 
+There is one endpoint per input type rather than a single endpoint with a discriminator field,
+because the three requests do not share a shape: a PDF and a video are both `multipart/form-data`
+but accept different file types and size limits, while a YouTube lesson is a small JSON body with
+no upload at all. All three return the same `LessonRecord` — a client renders one shape and reads
+`lesson.source.source_type` when it needs to know where the lesson came from.
+
 ### `POST /api/v1/lessons/pdf`
 
 Creates a lesson from an uploaded PDF.
@@ -23,6 +29,47 @@ Creates a lesson from an uploaded PDF.
 curl -F "file=@notes.pdf" http://localhost:8000/api/v1/lessons/pdf
 ```
 
+### `POST /api/v1/lessons/video`
+
+Creates a lesson from an uploaded video.
+
+- **Request:** `multipart/form-data` with one field, `file`. Accepted types: `video/mp4`,
+  `video/mpeg`, `video/mpg`, `video/mov` (`video/quicktime` is also accepted and treated the same),
+  `video/avi` (`video/x-msvideo` too), `video/x-flv`, `video/webm`, `video/wmv`
+  (`video/x-ms-wmv`/`video/x-ms-asf` too), `video/3gpp` (`video/3gp` too). The declared type and the
+  file's own leading bytes must agree, or the upload is rejected before anything is sent anywhere.
+- **Success:** `201 Created`, body is a [`LessonRecord`](#the-lessonrecord-shape) whose
+  `metadata.page_count` is absent (a video has no pages) and whose
+  `metadata.chunk_count`/`character_count` are `0`.
+- **Errors:** see the [error catalog](#error-catalog) below — in particular `INVALID_FILE_TYPE` for
+  an unsupported or mismatched video, and `AI_INPUT_NOT_SUPPORTED` when no configured provider can
+  watch video at all.
+
+```bash
+curl -F "file=@lecture.mp4" http://localhost:8000/api/v1/lessons/video
+```
+
+### `POST /api/v1/lessons/youtube`
+
+Creates a lesson from a public YouTube video. The API never downloads the video; the URL is
+rebuilt into a canonical `https://www.youtube.com/watch?v=<id>` form and handed to the AI provider,
+which resolves it itself.
+
+- **Request:** `application/json` body: `{"url": "<a link to a single public video>"}`. Watch,
+  short (`youtu.be/...`), `shorts`, `embed` and `live` links are all accepted; channel, playlist and
+  search links are not, because there is no single video to watch.
+- **Success:** `201 Created`, body is a [`LessonRecord`](#the-lessonrecord-shape) shaped exactly
+  like the video-upload response, except `metadata.source_filename` is absent (there is no
+  uploaded file).
+- **Errors:** see the [error catalog](#error-catalog) below — in particular `INVALID_VIDEO_URL` for
+  a link that isn't a single public YouTube video.
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}' \
+  http://localhost:8000/api/v1/lessons/youtube
+```
+
 ### `GET /api/v1/lessons/{lesson_id}`
 
 Fetches a previously created lesson.
@@ -30,8 +77,9 @@ Fetches a previously created lesson.
 - **Success:** `200 OK`, the same `LessonRecord` returned by the `POST` that created it.
 - **Errors:** `404 LESSON_NOT_FOUND` for an unknown or invalid id.
 
-Both endpoints return byte-for-byte the same `LessonRecord` shape — `GET` never returns less than
-`POST` did, so a client can safely refetch a lesson instead of holding it in memory.
+All four endpoints return byte-for-byte the same `LessonRecord` shape — `GET` never returns less
+than the `POST` that created the lesson did, so a client can safely refetch a lesson instead of
+holding it in memory.
 
 ## The `LessonRecord` shape
 
@@ -44,8 +92,8 @@ Both endpoints return byte-for-byte the same `LessonRecord` shape — `GET` neve
     "is_mock": "boolean",
     "notice": "string, present only for fallback/cached/demo",
     "model": "string, present only when a live AI model produced this lesson",
-    "source_filename": "string",
-    "page_count": "integer",
+    "source_filename": "string, present only for an uploaded PDF or video, absent for YouTube",
+    "page_count": "integer, present only for a PDF, absent for video and YouTube",
     "chunk_count": "integer",
     "character_count": "integer",
     "ai_request_count": "integer",
@@ -68,16 +116,19 @@ with `exclude_none`), not sent as `null`. Check for the key's presence, not its 
 
 ### `metadata` field reference
 
-| Field                                                                                               | Always present?                                | Notes                                                                                                                                                                |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provider`                                                                                          | yes                                            | Who produced the lesson: an AI provider name, `"cache"`, or `"demo"`. Never used for rendering — see [Contract stability](#contract-stability-what-you-can-rely-on). |
-| `generation_status`                                                                                 | yes                                            | One of four states; see the [status matrix](#generation-status-and-degraded-states) below.                                                                           |
-| `is_mock`                                                                                           | yes                                            | `true` only when `provider` is `"demo"` — the lesson is fixed example content, not about the uploaded file.                                                          |
-| `notice`                                                                                            | only for fallback/cached/demo                  | Plain-language, user-safe sentence explaining why this isn't a fresh, live result. Safe to show directly in the UI.                                                  |
-| `model`                                                                                             | only when a live/fallback AI provider answered | Absent for `cache` and `demo`.                                                                                                                                       |
-| `warnings`                                                                                          | yes (may be `[]`)                              | Things that were removed or corrected before the lesson was accepted — e.g. an unverifiable quote, or scanned pages with no extractable text. Safe to show to users. |
-| `timings`                                                                                           | yes                                            | Milliseconds per pipeline stage, useful for a loading-progress UI.                                                                                                   |
-| `source_filename`, `page_count`, `chunk_count`, `character_count`, `ai_request_count`, `created_at` | yes                                            | Informational; not needed to render the lesson.                                                                                                                      |
+| Field                            | Always present?                                | Notes                                                                                                                                                                                                                                                                                           |
+| -------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider`                       | yes                                            | Who produced the lesson: an AI provider name, `"cache"`, or `"demo"`. Never used for rendering — see [Contract stability](#contract-stability-what-you-can-rely-on).                                                                                                                            |
+| `generation_status`              | yes                                            | One of four states; see the [status matrix](#generation-status-and-degraded-states) below.                                                                                                                                                                                                      |
+| `is_mock`                        | yes                                            | `true` only when `provider` is `"demo"` — the lesson is fixed example content, not about the uploaded file.                                                                                                                                                                                     |
+| `notice`                         | only for fallback/cached/demo                  | Plain-language, user-safe sentence explaining why this isn't a fresh, live result. Safe to show directly in the UI.                                                                                                                                                                             |
+| `model`                          | only when a live/fallback AI provider answered | Absent for `cache` and `demo`.                                                                                                                                                                                                                                                                  |
+| `warnings`                       | yes (may be `[]`)                              | Things that were removed or corrected before the lesson was accepted — e.g. an unverifiable quote, or scanned pages with no extractable text. For a video/YouTube lesson, also says when a quote came from what was said in the video and was not checked word for word. Safe to show to users. |
+| `timings`                        | yes                                            | Milliseconds per pipeline stage, useful for a loading-progress UI.                                                                                                                                                                                                                              |
+| `source_filename`                | only for an uploaded PDF or video              | Absent for a YouTube lesson, which has no uploaded file. Branch on `lesson.source.source_type`, not on this field's presence, if you need to know the input type.                                                                                                                               |
+| `page_count`                     | only for a PDF                                 | Absent for video and YouTube lessons, which have no pages.                                                                                                                                                                                                                                      |
+| `chunk_count`, `character_count` | yes                                            | Both `0` for a video/YouTube lesson: nothing was extracted or chunked.                                                                                                                                                                                                                          |
+| `ai_request_count`, `created_at` | yes                                            | Informational; not needed to render the lesson.                                                                                                                                                                                                                                                 |
 
 ## Generation status and degraded states
 
@@ -148,21 +199,24 @@ Every error response has the same envelope:
 and may change wording over time; `details` is present only for `VALIDATION_ERROR` (a list of
 per-field problems) and otherwise omitted.
 
-| `code`                          | HTTP         | When                                                                                                                                                                                                            |
-| ------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `INVALID_FILE_TYPE`             | 415          | Upload is not a PDF — wrong declared content type, or the bytes don't start with `%PDF-`.                                                                                                                       |
-| `FILE_TOO_LARGE`                | 413          | Upload exceeds `MAX_UPLOAD_MB`.                                                                                                                                                                                 |
-| `PDF_EXTRACTION_FAILED`         | 422          | The PDF is damaged, password-protected, or has zero pages.                                                                                                                                                      |
-| `PDF_HAS_NO_EXTRACTABLE_TEXT`   | 422          | Scanned/image-only PDF — no OCR yet.                                                                                                                                                                            |
-| `PDF_TOO_MANY_PAGES`            | 422          | Over `PDF_MAX_PAGES`.                                                                                                                                                                                           |
-| `DOCUMENT_TOO_LONG`             | 422          | The document would need more AI requests than `AI_MAX_CHUNKS` allows.                                                                                                                                           |
-| `AI_RATE_LIMITED`               | 429          | Every configured provider is currently rate-limited.                                                                                                                                                            |
-| `AI_INVALID_RESPONSE`           | 502          | A provider's output didn't match the required schema.                                                                                                                                                           |
-| `LESSON_VALIDATION_FAILED`      | 502          | No valid lesson could be assembled from the AI output.                                                                                                                                                          |
-| `AI_PROVIDER_UNAVAILABLE`       | 503          | **Covers both an unreachable/failing provider and a request timeout** (each provider has its own hard wall-clock deadline; a hang is treated exactly like an outage — never a hung HTTP request on the client). |
-| `LESSON_NOT_FOUND`              | 404          | Unknown or malformed `lesson_id`.                                                                                                                                                                               |
-| `VALIDATION_ERROR`              | 422          | Malformed request — e.g. no `file` field in the multipart body.                                                                                                                                                 |
-| `HTTP_ERROR` / `INTERNAL_ERROR` | varies / 500 | Fallback envelopes for routing errors and truly unexpected failures; stack traces are never included.                                                                                                           |
+| `code`                          | HTTP         | When                                                                                                                                                                                                                               |
+| ------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_FILE_TYPE`             | 415          | The upload doesn't match what the endpoint accepts: for `/pdf`, wrong declared content type or the bytes don't start with `%PDF-`; for `/video`, an unsupported video type or one whose declared type and file signature disagree. |
+| `FILE_TOO_LARGE`                | 413          | Upload exceeds `MAX_UPLOAD_MB` (PDF) or `MAX_VIDEO_UPLOAD_MB` (video).                                                                                                                                                             |
+| `PDF_EXTRACTION_FAILED`         | 422          | The PDF is damaged, password-protected, or has zero pages.                                                                                                                                                                         |
+| `PDF_HAS_NO_EXTRACTABLE_TEXT`   | 422          | Scanned/image-only PDF — no OCR yet.                                                                                                                                                                                               |
+| `PDF_TOO_MANY_PAGES`            | 422          | Over `PDF_MAX_PAGES`.                                                                                                                                                                                                              |
+| `DOCUMENT_TOO_LONG`             | 422          | The document would need more AI requests than `AI_MAX_CHUNKS` allows.                                                                                                                                                              |
+| `INVALID_VIDEO_URL`             | 422          | The `youtube` request body's `url` is not a link to a single public YouTube video.                                                                                                                                                 |
+| `VIDEO_PROCESSING_FAILED`       | 502          | The video-capable provider could not process the video (for example, it rejected the file or the link when it tried to watch it).                                                                                                  |
+| `AI_RATE_LIMITED`               | 429          | Every configured provider is currently rate-limited.                                                                                                                                                                               |
+| `AI_INVALID_RESPONSE`           | 502          | A provider's output didn't match the required schema.                                                                                                                                                                              |
+| `LESSON_VALIDATION_FAILED`      | 502          | No valid lesson could be assembled from the AI output.                                                                                                                                                                             |
+| `AI_PROVIDER_UNAVAILABLE`       | 503          | **Covers both an unreachable/failing provider and a request timeout** (each provider has its own hard wall-clock deadline; a hang is treated exactly like an outage — never a hung HTTP request on the client).                    |
+| `AI_INPUT_NOT_SUPPORTED`        | 503          | No configured provider can read this input at all — for example, a `video`/`youtube` request when only text-capable providers are configured. Retrying will not help; configuring a video-capable provider will.                   |
+| `LESSON_NOT_FOUND`              | 404          | Unknown or malformed `lesson_id`.                                                                                                                                                                                                  |
+| `VALIDATION_ERROR`              | 422          | Malformed request — e.g. no `file` field in the multipart body, or no `url` field for `/lessons/youtube`.                                                                                                                          |
+| `HTTP_ERROR` / `INTERNAL_ERROR` | varies / 500 | Fallback envelopes for routing errors and truly unexpected failures; stack traces are never included.                                                                                                                              |
 
 "Invalid PDF" and "timeout" are not distinct codes — they map onto the rows above
 (`INVALID_FILE_TYPE`/`PDF_EXTRACTION_FAILED`/`PDF_HAS_NO_EXTRACTABLE_TEXT` for a bad PDF,
@@ -187,6 +241,34 @@ on transport-level signals like "the request took a long time."
   point at existing nodes, quiz `correct_option_id` matches an option, quiz `section_ids` reference
   existing sections. Sections or quiz questions the API couldn't validate are dropped, never sent
   malformed — check `metadata.warnings` to see what (if anything) was removed.
+- **`lesson.subject` is always present** and is one of `biology`, `mathematics`, `physics`,
+  `chemistry`, `history`, `computer_science`, `geography` or `general`. It is the model's own guess
+  at the lesson's academic subject, normalised server-side; `general` means the subject could not
+  be confidently determined, not that the lesson is uncategorised. Use it to pick a visual theme —
+  it never affects which section renderer you use, only how it's styled.
+- **`lesson.source.source_type` is `pdf`, `video` or `youtube`.** An uploaded PDF or video carries
+  `source.filename` (a display name, never a server path); a YouTube video carries `source.url`
+  (the canonical watch URL). Use this field, not `metadata.source_filename`'s presence, to tell the
+  three input types apart.
+
+### Source references: pages vs. timestamps
+
+Every section and quiz question may carry `source_references`, each pointing back to where its
+content came from. Which locator is present depends on `lesson.source.source_type`, not on the
+section's own `type`:
+
+- **`pdf`:** `page_number` (1-based), optionally with a verbatim `excerpt` the API confirmed
+  appears on that page.
+- **`video` / `youtube`:** `start_time_seconds` and optionally `end_time_seconds` (both 0-based
+  seconds from the start of the video), optionally with an `excerpt` of what was said at that
+  point. There is no transcript to check a quote against, so a video/YouTube lesson's
+  `metadata.warnings` says explicitly when quotes come from what was heard and were not checked
+  word for word — don't present them with the same confidence as a checked PDF citation.
+
+In practice the API never mixes the two: a reference built from a PDF carries no timestamp fields,
+and one built from a video carries no `page_number` — but the schema's own guarantee is only
+`minProperties: 1`, so treat `SourceReference` as "whichever of these keys are present," not as a
+fixed shape.
 
 ## The 9 section types, one example of each
 
@@ -360,6 +442,7 @@ has all 9, plus the full quiz with `source_references`):
       "title": "Biology Notes, Chapter 8: Photosynthesis",
       "filename": "biology-notes-chapter-8.pdf"
     },
+    "subject": "biology",
     "sections": [
       {
         "id": "sec-definition",
@@ -431,6 +514,73 @@ has all 9, plus the full quiz with `source_references`):
 `all-section-types.lesson.json`, wrapped in a `LessonRecord` envelope exactly like this one when
 served by the API.)
 
+### A video/YouTube `LessonRecord`, for comparison
+
+Same shape, but from `POST /api/v1/lessons/youtube`. Note what's absent (`page_count`,
+`source_filename`), what's `0` (`chunk_count`, `character_count`), and that `source_references`
+carry `start_time_seconds`/`end_time_seconds` instead of `page_number`:
+
+```json
+{
+  "lesson_id": "7a1c4e9b2d3f4a5b8c9d0e1f2a3b4c5d",
+  "metadata": {
+    "provider": "gemini",
+    "generation_status": "live",
+    "is_mock": false,
+    "model": "gemini-3.8-flash",
+    "chunk_count": 0,
+    "character_count": 0,
+    "ai_request_count": 1,
+    "warnings": [
+      "2 quote(s) come from what is said in the video. They are placed at the time they were heard but were not checked word for word."
+    ],
+    "timings": {
+      "extraction_ms": 0,
+      "chunking_ms": 0,
+      "generation_ms": 9800,
+      "validation_ms": 2,
+      "total_ms": 9810
+    },
+    "created_at": "2026-09-12T10:00:00Z"
+  },
+  "lesson": {
+    "schema_version": "0.1.0",
+    "id": "7a1c4e9b2d3f4a5b8c9d0e1f2a3b4c5d",
+    "title": "Photosynthesis, explained",
+    "overview": "A recorded lecture on how plants convert light into chemical energy.",
+    "source": {
+      "source_type": "youtube",
+      "title": "YouTube video",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "subject": "biology",
+    "sections": [
+      {
+        "id": "sec-definition",
+        "type": "concept",
+        "title": "What is photosynthesis?",
+        "source_references": [
+          {
+            "start_time_seconds": 42,
+            "end_time_seconds": 58,
+            "excerpt": "Plants take in light, water and carbon dioxide, and turn them into glucose and oxygen."
+          }
+        ],
+        "content": {
+          "term": "Photosynthesis",
+          "definition": "The process in which plants use light energy to make glucose from carbon dioxide and water. Oxygen is released.",
+          "key_points": [
+            "Inputs: carbon dioxide, water and light energy.",
+            "Outputs: glucose and oxygen."
+          ]
+        }
+      }
+    ],
+    "quiz": []
+  }
+}
+```
+
 ## CORS and local development
 
 The API's CORS policy (`services/api/app/main.py`, configured via `CORS_ALLOWED_ORIGINS` in
@@ -447,12 +597,17 @@ The API's CORS policy (`services/api/app/main.py`, configured via `CORS_ALLOWED_
   (`Settings._require_explicit_cors_in_production`) — you cannot accidentally ship a wildcard CORS
   policy; explicit origins are required.
 
-**Why `POST /api/v1/lessons/pdf` works without a CORS preflight:** a `multipart/form-data` POST is
-one of the browser's CORS-safelisted request types, so the browser does not send an `OPTIONS`
-preflight for it at all — it only checks the response's `Access-Control-Allow-Origin` header
-against the request's `Origin`. No extra CORS configuration is needed unless a future request adds
-a custom header (e.g. `Authorization`), which would trigger a preflight that the current
-`allow_methods`/`allow_headers` configuration already covers for `GET`/`POST` and `Content-Type`.
+**Why `POST /api/v1/lessons/pdf` and `POST /api/v1/lessons/video` work without a CORS preflight:**
+a `multipart/form-data` POST is one of the browser's CORS-safelisted request types, so the browser
+does not send an `OPTIONS` preflight for it at all — it only checks the response's
+`Access-Control-Allow-Origin` header against the request's `Origin`.
+
+**`POST /api/v1/lessons/youtube` is different:** its body is `application/json`, which is not a
+CORS-safelisted content type, so the browser does send an `OPTIONS` preflight first. This already
+works with no extra configuration, because `allow_methods` covers `POST` and `allow_headers`
+covers `Content-Type` — the same configuration the PDF/video endpoints rely on for their own,
+simpler case. No extra CORS configuration is needed for any of the four endpoints unless a future
+request adds a custom header (e.g. `Authorization`) that isn't in `allow_headers` yet.
 
 **Using a different frontend port** (e.g. `npm run dev:web -- --port 3001`): add the origin to
 `CORS_ALLOWED_ORIGINS` in the repository-root `.env` (comma-separated for multiple origins, e.g.
