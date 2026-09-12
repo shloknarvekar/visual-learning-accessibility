@@ -1,3 +1,4 @@
+import type { Lesson } from "@visual-learning/contracts";
 import { config } from "./config";
 
 export type HealthResponse = {
@@ -47,8 +48,10 @@ export type LessonMetadata = {
   is_mock: boolean;
   notice?: string;
   model?: string;
-  source_filename: string;
-  page_count: number;
+  /** Absent for a YouTube lesson, which has no uploaded file. */
+  source_filename?: string;
+  /** Absent for video and YouTube lessons, which have no pages. */
+  page_count?: number;
   chunk_count: number;
   character_count: number;
   ai_request_count: number;
@@ -66,12 +69,12 @@ export type LessonMetadata = {
 export type LessonRecord = {
   lesson_id: string;
   metadata: LessonMetadata;
-  lesson: import("@visual-learning/contracts").Lesson;
+  lesson: Lesson;
 };
 
 export const apiClient = {
   getHealth: () => request<HealthResponse>("/api/v1/health"),
-  createPdfLesson: (file: File) => {
+  createLessonFromPdf: (file: File) => {
     const form = new FormData();
     form.append("file", file);
     return request<LessonRecord>("/api/v1/lessons/pdf", {
@@ -79,5 +82,19 @@ export const apiClient = {
       body: form,
     });
   },
+  createLessonFromVideo: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<LessonRecord>("/api/v1/lessons/video", {
+      method: "POST",
+      body: form,
+    });
+  },
+  createLessonFromYoutube: (url: string) =>
+    request<LessonRecord>("/api/v1/lessons/youtube", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    }),
   getLesson: (lessonId: string) => request<LessonRecord>(`/api/v1/lessons/${encodeURIComponent(lessonId)}`),
 };
