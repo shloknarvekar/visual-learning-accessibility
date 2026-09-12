@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, get_args
 
 import pytest
 
@@ -15,7 +15,7 @@ from app.ai.drafts import (
 )
 from app.ai.lesson_assembly import AssembledLesson, LessonAssemblyError, assemble_lesson
 from app.models.content import ExtractedDocument, ExtractedPage
-from app.schemas.lesson import Lesson, Source, SourceReference
+from app.schemas.lesson import Lesson, Source, SourceReference, Subject
 
 PAGES = [
     "Photosynthesis is the process plants use to make glucose from light, water and carbon "
@@ -95,11 +95,15 @@ def question(
 
 
 def assemble(
-    sections: list[DraftSection], quiz: list[DraftQuizQuestion] | None = None
+    sections: list[DraftSection],
+    quiz: list[DraftQuizQuestion] | None = None,
+    *,
+    subject: str = "",
 ) -> AssembledLesson:
     draft = LessonDraft(
         title="Photosynthesis",
         overview="How plants make food from light.",
+        subject=subject,
         sections=sections,
         quiz=[question(n) for n in (1, 2, 3)] if quiz is None else quiz,
     )
@@ -121,6 +125,36 @@ def test_valid_draft_becomes_a_valid_lesson() -> None:
     assert lesson.quiz[0].correct_option_id == "a"
     assert lesson.quiz[0].section_ids == ["sec-1"]
     assert Lesson.model_validate(lesson.model_dump(mode="json", exclude_none=True)) == lesson
+
+
+# ---- Subject --------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["biology", "Biology", " biology ", "BIOLOGY"],
+    ids=["exact", "capitalized", "surrounding-whitespace", "shouting"],
+)
+def test_a_recognized_subject_propagates_onto_the_lesson(raw: str) -> None:
+    lesson = assemble([concept()], subject=raw).lesson
+
+    assert lesson.subject == "biology"
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["", "astrology", "biology and chemistry", "not sure"],
+    ids=["empty", "unrecognized", "multiple-guesses", "hedge"],
+)
+def test_an_unconfident_subject_falls_back_to_general(raw: str) -> None:
+    lesson = assemble([concept()], subject=raw).lesson
+
+    assert lesson.subject == "general"
+
+
+def test_every_allowed_subject_round_trips_unchanged() -> None:
+    for subject in get_args(Subject):
+        assert assemble([concept()], subject=subject).lesson.subject == subject
 
 
 def test_quote_citing_the_wrong_page_is_moved_to_its_real_page() -> None:

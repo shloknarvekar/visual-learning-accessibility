@@ -18,7 +18,20 @@ from app.utils.ids import ID_PATTERN
 
 Id = Annotated[str, StringConstraints(pattern=ID_PATTERN)]
 PlainText = Annotated[str, StringConstraints(min_length=1)]
-SourceType = Literal["youtube", "pdf"]
+SourceType = Literal["youtube", "pdf", "video"]
+
+# Keep in sync with $defs.Subject.enum in packages/contracts/lesson.schema.json.
+# "general" is the fallback whenever the subject cannot be confidently determined.
+Subject = Literal[
+    "biology",
+    "mathematics",
+    "physics",
+    "chemistry",
+    "history",
+    "computer_science",
+    "geography",
+    "general",
+]
 
 
 def _ensure_unique(ids: list[str], kind: str) -> None:
@@ -284,6 +297,7 @@ class Lesson(ContractModel):
     title: PlainText
     overview: PlainText
     source: Source
+    subject: Subject
     sections: list[Section] = Field(min_length=1)
     quiz: list[QuizQuestion] = Field(default_factory=list)
 

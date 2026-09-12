@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from app.core.config import CONTRACTS_DIR
 from app.schemas import lesson as lesson_models
-from app.schemas.lesson import Lesson, Section
+from app.schemas.lesson import Lesson, Section, Subject
 
 ALL_SECTION_TYPES = frozenset(
     {
@@ -98,6 +98,7 @@ def test_constants_match_the_schema(lesson_schema: dict[str, Any]) -> None:
         lesson_schema["properties"]["schema_version"]["const"],
     )
     assert defs["Id"]["pattern"] == lesson_models.ID_PATTERN
+    assert set(get_args(Subject)) == set(defs["Subject"]["enum"])
 
 
 def test_rejects_edge_to_unknown_node(example_lesson_data: dict[str, Any]) -> None:

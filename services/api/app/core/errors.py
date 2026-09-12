@@ -29,7 +29,13 @@ class ErrorCode(StrEnum):
     PDF_HAS_NO_EXTRACTABLE_TEXT = "PDF_HAS_NO_EXTRACTABLE_TEXT"
     PDF_TOO_MANY_PAGES = "PDF_TOO_MANY_PAGES"
     DOCUMENT_TOO_LONG = "DOCUMENT_TOO_LONG"
+    INVALID_VIDEO_URL = "INVALID_VIDEO_URL"
+    VIDEO_PROCESSING_FAILED = "VIDEO_PROCESSING_FAILED"
     AI_PROVIDER_UNAVAILABLE = "AI_PROVIDER_UNAVAILABLE"
+    # The configured providers cannot read this kind of input at all. Distinct from
+    # AI_PROVIDER_UNAVAILABLE, which means a provider that *could* have answered did not: retrying
+    # this request will never help until a video-capable provider is configured.
+    AI_INPUT_NOT_SUPPORTED = "AI_INPUT_NOT_SUPPORTED"
     AI_RATE_LIMITED = "AI_RATE_LIMITED"
     AI_INVALID_RESPONSE = "AI_INVALID_RESPONSE"
     LESSON_VALIDATION_FAILED = "LESSON_VALIDATION_FAILED"
@@ -43,7 +49,10 @@ _STATUS_CODES: dict[ErrorCode, int] = {
     ErrorCode.PDF_HAS_NO_EXTRACTABLE_TEXT: 422,
     ErrorCode.PDF_TOO_MANY_PAGES: 422,
     ErrorCode.DOCUMENT_TOO_LONG: 422,
+    ErrorCode.INVALID_VIDEO_URL: 422,
+    ErrorCode.VIDEO_PROCESSING_FAILED: 502,
     ErrorCode.AI_PROVIDER_UNAVAILABLE: 503,
+    ErrorCode.AI_INPUT_NOT_SUPPORTED: 503,
     ErrorCode.AI_RATE_LIMITED: 429,
     ErrorCode.AI_INVALID_RESPONSE: 502,
     ErrorCode.LESSON_VALIDATION_FAILED: 502,

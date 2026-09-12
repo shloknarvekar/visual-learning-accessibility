@@ -1,4 +1,8 @@
-"""Response models for the lessons API. The `lesson` field follows the shared Lesson contract."""
+"""Request and response models for the lessons API.
+
+The `lesson` field follows the shared Lesson contract; everything around it describes how that
+lesson was produced and is specific to this API.
+"""
 
 from datetime import datetime
 
@@ -6,6 +10,22 @@ from pydantic import BaseModel, Field
 
 from app.ai.lesson_generator import GenerationStatus, LessonProviderName
 from app.schemas.lesson import Id, Lesson
+
+
+class YouTubeLessonRequest(BaseModel):
+    """The body of `POST /lessons/youtube`.
+
+    Typed as a plain string rather than a URL so that a link which is well-formed but not a
+    YouTube video fails as `INVALID_VIDEO_URL`, with an explanation, instead of as a generic
+    request-validation error. The real checking happens in `app.ingestion.video`.
+    """
+
+    url: str = Field(
+        min_length=1,
+        max_length=2048,
+        description="A link to a single public YouTube video.",
+        examples=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+    )
 
 
 class ProcessingTimings(BaseModel):
@@ -33,8 +53,15 @@ class LessonMetadata(BaseModel):
         default=None, description="A note to show the user, for example that this is demo data."
     )
     model: str | None = Field(default=None, description="The AI model that generated the lesson.")
-    source_filename: str
-    page_count: int
+    # Both are omitted rather than faked when they do not apply: a YouTube lesson has no uploaded
+    # file, and no video has pages. What the lesson was made from is always in `lesson.source`
+    # (`source_type`, plus `url` or `filename`), which is the field to branch on - not these.
+    source_filename: str | None = Field(
+        default=None, description="Name of the uploaded file. Absent for a YouTube lesson."
+    )
+    page_count: int | None = Field(
+        default=None, description="Pages in the source document. Absent for video lessons."
+    )
     chunk_count: int
     character_count: int
     ai_request_count: int

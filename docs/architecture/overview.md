@@ -14,11 +14,14 @@ A monorepo with two deployable apps and one shared contract:
 flowchart LR
   user([Student]) --> web[Next.js web app]
   web -- "POST /api/v1/lessons/pdf" --> api[FastAPI API]
+  web -- "POST /api/v1/lessons/video" --> api
+  web -- "POST /api/v1/lessons/youtube" --> api
   subgraph api_internals [services/api]
-    api --> upload[Upload checks]
-    upload --> extraction[PDF text extraction + cleaning]
+    api --> upload[Upload / link checks]
+    upload -- pdf --> extraction[PDF text extraction + cleaning]
     extraction --> chunking[Chunking]
     chunking --> generator{{LessonGenerator}}
+    upload -- "video / youtube" --> generator
     generator --> assembly[Assembly + provenance checks]
     assembly --> validation[Contract validation]
     validation --> store[(Lesson store)]
@@ -33,6 +36,11 @@ flowchart LR
   contracts -. Pydantic mirror .-> api
 ```
 
+A video or YouTube request skips extraction and chunking entirely — the model watches the material
+directly — but joins the same `LessonGenerator`, assembly, validation and storage path as a PDF.
+Today only Gemini can watch a video; OpenRouter and Groq answer text only, so a video/YouTube
+lesson needs `GEMINI_API_KEY` configured (or runs in demo mode with none of the three configured).
+
 ## Constraints that shape the design
 
 1. **Zero cost.** The prototype must be buildable and runnable with a $0 AI/API budget. No paid-only
@@ -43,8 +51,11 @@ flowchart LR
 3. **Structured data, not generated UI or images.** Every AI step returns JSON constrained by a
    schema, and the API validates the final result against the Lesson contract. The frontend picks a
    renderer for each section from its `type`.
-4. **Grounded content.** The AI may only use the uploaded material. The API checks that page numbers
-   and quotes really come from the PDF before a lesson is stored.
+4. **Grounded content.** The AI may only use the source material. For a PDF, the API checks that
+   page numbers and quotes really come from the document before a lesson is stored. A video has no
+   transcript to check a quote against, so for video and YouTube lessons the API instead verifies
+   that every cited timestamp is a plausible position in the video and labels quotes as heard, not
+   verified word for word — see [Source references](#source-references-pages-vs-timestamps).
 
 ## Service boundaries
 
@@ -57,17 +68,17 @@ flowchart LR
 
 ## Backend layout (`services/api/app`)
 
-| Module              | Role                                                                                                                                                                                                                                                                                                                        |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.py`           | App factory: settings, AI mode, store and service wiring, middleware, routers                                                                                                                                                                                                                                               |
-| `core/`             | `config.py` (settings and limits), `logging.py`, `request_context.py` (request id), `middleware.py` (request logging, upload size limit), `errors.py` (error codes and envelope)                                                                                                                                            |
-| `api/routes/`       | `health.py`; `lessons.py` (`POST /lessons/pdf`, `GET /lessons/{id}`)                                                                                                                                                                                                                                                        |
-| `schemas/`          | `lesson.py` (Pydantic mirror of the contract), `lessons_api.py` (`LessonRecord` response)                                                                                                                                                                                                                                   |
-| `models/content.py` | `ExtractedPage`, `ExtractedDocument`, `PagePassage`, `ContentChunk`                                                                                                                                                                                                                                                         |
-| `ingestion/`        | `pdf.py` (PyMuPDF extraction; the only PyMuPDF import), `text_cleaning.py`                                                                                                                                                                                                                                                  |
-| `services/`         | `uploads.py`, `chunking.py`, `pdf_lessons.py` (orchestration), `lesson_store.py`                                                                                                                                                                                                                                            |
-| `ai/`               | `provider.py`, `gemini_provider.py`, `openai_compatible.py`, `openrouter_provider.py`, `groq_provider.py`, `schema_tools.py`, `routing.py`, `lesson_cache.py`, `factory.py`, `lesson_generator.py`, `ai_lesson_generator.py`, `drafts.py`, `prompts/lesson_generation.py`, `lesson_assembly.py`, `mock_lesson_generator.py` |
-| `utils/`            | Safe id validation                                                                                                                                                                                                                                                                                                          |
+| Module        | Role                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.py`     | App factory: settings, AI mode, store and service wiring, middleware, routers                                                                                                                                                                                                                                                                                                               |
+| `core/`       | `config.py` (settings and limits), `logging.py`, `request_context.py` (request id), `middleware.py` (request logging, upload size limit), `errors.py` (error codes and envelope)                                                                                                                                                                                                            |
+| `api/routes/` | `health.py`; `lessons.py` (`POST /lessons/pdf`, `POST /lessons/video`, `POST /lessons/youtube`, `GET /lessons/{id}`)                                                                                                                                                                                                                                                                        |
+| `schemas/`    | `lesson.py` (Pydantic mirror of the contract), `lessons_api.py` (`LessonRecord` response, `YouTubeLessonRequest`)                                                                                                                                                                                                                                                                           |
+| `models/`     | `content.py` (`ExtractedPage`, `ExtractedDocument`, `PagePassage`, `ContentChunk`); `media.py` (`VideoSource`, `VideoProcessing` — internal, not part of the public contract)                                                                                                                                                                                                               |
+| `ingestion/`  | `pdf.py` (PyMuPDF extraction; the only PyMuPDF import), `text_cleaning.py`, `video.py` (YouTube URL validation and canonicalisation, uploaded-video MIME/signature checks; never fetches or downloads anything)                                                                                                                                                                             |
+| `services/`   | `uploads.py`, `chunking.py`, `pdf_lessons.py` (PDF orchestration), `video_lessons.py` (video/YouTube orchestration), `lesson_store.py`                                                                                                                                                                                                                                                      |
+| `ai/`         | `provider.py`, `gemini_provider.py`, `openai_compatible.py`, `openrouter_provider.py`, `groq_provider.py`, `schema_tools.py`, `routing.py`, `lesson_cache.py`, `factory.py`, `lesson_generator.py`, `ai_lesson_generator.py`, `video_lesson_generator.py`, `video_upload.py`, `drafts.py`, `prompts/lesson_generation.py`, `lesson_assembly.py`, `grounding.py`, `mock_lesson_generator.py` |
+| `utils/`      | Safe id validation                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## PDF lesson pipeline
 
@@ -83,6 +94,36 @@ flowchart LR
 | 8   | Storage    | `LessonRecord` saved as `DATA_DIR/lessons/<id>.json`                                                                                                      | `services/lesson_store.py`   |
 
 The uploaded file is deleted as soon as extraction finishes. Later steps only use the extracted text.
+
+## Video and YouTube lesson pipeline
+
+A video has nothing to extract or chunk: the model watches it directly. Both inputs become the same
+internal `VideoSource` and share every step from generation onward with the PDF pipeline.
+
+| #   | Step               | What happens                                                                                                                                                                                                                                                                                                      | Module                                      |
+| --- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 1   | Validate the input | YouTube: the URL is parsed for an 11-character video id and rebuilt into a canonical `https://www.youtube.com/watch?v=<id>` URL — the caller's string is never passed through as-is. Upload: declared content type and file signature (magic bytes) must agree and match one of the video types Gemini documents. | `ingestion/video.py`                        |
+| 2   | Make it watchable  | YouTube: nothing to do — the link is handed to Gemini, which resolves it; this server never fetches it. Upload: streamed to disk under a size limit, then sent to the Gemini Files API and deleted locally once the model has it.                                                                                 | `services/uploads.py`, `ai/video_upload.py` |
+| 3   | Generation         | `VideoLessonGenerator` asks the one configured video-capable provider (Gemini today) to watch the whole video in one request and return the same `LessonDraft` shape the PDF pipeline uses                                                                                                                        | `ai/video_lesson_generator.py`              |
+| 4   | Assembly           | AI draft → strict `Lesson`, using `VideoGrounding` instead of `PageGrounding`: a timestamp is kept only if it is a plausible position in the video; quotes are kept but labelled as heard, not checked word for word                                                                                              | `ai/lesson_assembly.py`, `ai/grounding.py`  |
+| 5   | Validation         | The lesson is validated again from its JSON form, as clients receive it                                                                                                                                                                                                                                           | `services/video_lessons.py`                 |
+| 6   | Storage            | `LessonRecord` saved as `DATA_DIR/lessons/<id>.json` — the same store the PDF pipeline uses                                                                                                                                                                                                                       | `services/lesson_store.py`                  |
+
+A video lesson's `metadata` has no `page_count` (a video has no pages) and `chunk_count`/
+`character_count` are both `0` (nothing was extracted or chunked); `source_filename` is present only
+for an uploaded video, never for a YouTube link. See
+[api-reference.md](api-reference.md#the-lessonrecord-shape) for the exact shape.
+
+### Source references: pages vs. timestamps
+
+`SourceReference` carries whichever locator its input can actually prove:
+
+- **PDF:** `page_number`, optionally with a verbatim `excerpt` the API confirmed appears on that
+  page (see `PageGrounding` above).
+- **Video and YouTube:** `start_time_seconds` and optionally `end_time_seconds`, marking where in
+  the video the cited content occurs, optionally with an `excerpt` of what was said. There is no
+  transcript to check a quote against, so `metadata.warnings` says explicitly that quotes from a
+  video were not verified word for word — never presented as equivalent to a checked PDF citation.
 
 ## The AI layer
 
@@ -107,6 +148,10 @@ LessonGenerator
   implementation plus one entry in its `_PROVIDERS` table.
 - `resolve_ai_mode(settings)` returns the provider that will be tried first, or `mock` when none has
   a key. It is logged at startup and reported by `GET /api/v1/health` as `ai_mode`.
+- A video/YouTube request is routed the same way, through a separate `LessonGenerator` built from
+  `VideoLessonGenerator` (`app/ai/video_lesson_generator.py`) instead of `AILessonGenerator`, over
+  only the providers that can watch video — Gemini today, via `AIProvider.generate_structured_from_video`.
+  Everything below this point (routing, caching, demo fallback) applies identically to both.
 
 ### Routing and fallback
 
@@ -338,13 +383,28 @@ Visual sections are only created when the source supports them. Every visual has
 
 `packages/contracts/lesson.schema.json` (JSON Schema 2020-12) is the source of truth. TypeScript types
 are generated from it; `app/schemas/lesson.py` mirrors it and `tests/test_lesson_contract.py` fails
-on drift. The PDF pipeline did not require any contract change.
+on drift.
+
+Every `Lesson` has a required `subject`, one of `biology`, `mathematics`, `physics`, `chemistry`,
+`history`, `computer_science`, `geography` or `general`. It is the model's own guess, normalised
+case- and whitespace-insensitively in `ai/lesson_assembly.py`; anything the model returns that isn't
+one of these values falls back to `general` rather than being interpreted further. Person 3's web
+components use `subject` to pick a visual theme; the backend never renders anything itself.
+
+`source.source_type` is `pdf`, `video` or `youtube`. An uploaded PDF or video is described by
+`source.filename` (a display name only, never a server path); a YouTube video is described by
+`source.url` (the canonical watch URL, never the caller's original link).
 
 ## Lessons API
 
 > For a consumer-focused reference (full endpoint docs, one example of every section type
 > including `timeline`/`diagram`/`chart`, a complete `LessonRecord` example, the error catalog and
 > CORS/health notes) see [`api-reference.md`](api-reference.md).
+
+Three endpoints create a lesson, one per input type, because a PDF and a video are different
+multipart uploads and a YouTube link is a small JSON body with no upload at all. All three return
+the same `LessonRecord` shape, so a client renders one shape and reads `lesson.source.source_type`
+when it needs to know where the lesson came from.
 
 ### `POST /api/v1/lessons/pdf`
 
@@ -382,40 +442,67 @@ When a fallback answered, `provider` names it and `generation_status` is `fallba
 `notice` explains that the lesson is example data. `metadata.warnings` always records which
 providers were skipped and why.
 
+### `POST /api/v1/lessons/video`
+
+`multipart/form-data` with a `file` field: an uploaded video. See
+[api-reference.md](api-reference.md) for the accepted video types and size limit. Returns `201`
+with a `LessonRecord` whose `metadata.page_count` is absent (a video has no pages) and whose
+`metadata.chunk_count`/`character_count` are `0` (nothing was extracted or chunked).
+
+### `POST /api/v1/lessons/youtube`
+
+A JSON body: `{"url": "https://www.youtube.com/watch?v=..."}` — a link to a single public video.
+No file is uploaded and the API never downloads the video; the link is only rebuilt into a
+canonical form and handed to the AI provider, which resolves it itself. Returns `201` with a
+`LessonRecord` shaped exactly like the video-upload response, except `metadata.source_filename` is
+absent (there is no uploaded file).
+
 ### `GET /api/v1/lessons/{lesson_id}`
 
-Returns the same `LessonRecord`, or `404 LESSON_NOT_FOUND`.
+Returns the same `LessonRecord` that any of the three creation endpoints returned, or
+`404 LESSON_NOT_FOUND`.
 
 ### Errors
 
 All errors use `{"error": {"code", "message", "details?"}}`. Messages are safe to show to users;
 stack traces are only logged.
 
-| Code                          | HTTP | When                                                  |
-| ----------------------------- | ---- | ----------------------------------------------------- |
-| `INVALID_FILE_TYPE`           | 415  | Not a PDF (declared type or file signature), or empty |
-| `FILE_TOO_LARGE`              | 413  | Over `MAX_UPLOAD_MB`                                  |
-| `PDF_EXTRACTION_FAILED`       | 422  | Damaged, password-protected or page-less PDF          |
-| `PDF_HAS_NO_EXTRACTABLE_TEXT` | 422  | Scanned or image-only PDF ("OCR support is planned")  |
-| `PDF_TOO_MANY_PAGES`          | 422  | Over `PDF_MAX_PAGES`                                  |
-| `DOCUMENT_TOO_LONG`           | 422  | More chunks than `AI_MAX_CHUNKS`                      |
-| `AI_RATE_LIMITED`             | 429  | Free-tier limit reached                               |
-| `AI_INVALID_RESPONSE`         | 502  | Model output did not match the schema                 |
-| `LESSON_VALIDATION_FAILED`    | 502  | No valid lesson could be built from the model output  |
-| `AI_PROVIDER_UNAVAILABLE`     | 503  | Provider unreachable or failing                       |
-| `LESSON_NOT_FOUND`            | 404  | Unknown lesson id                                     |
-| `VALIDATION_ERROR`            | 422  | Malformed request, for example no `file` field        |
+| Code                          | HTTP | When                                                                                                               |
+| ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------ |
+| `INVALID_FILE_TYPE`           | 415  | Not a PDF (declared type or file signature), or empty                                                              |
+| `FILE_TOO_LARGE`              | 413  | Over `MAX_UPLOAD_MB`                                                                                               |
+| `PDF_EXTRACTION_FAILED`       | 422  | Damaged, password-protected or page-less PDF                                                                       |
+| `PDF_HAS_NO_EXTRACTABLE_TEXT` | 422  | Scanned or image-only PDF ("OCR support is planned")                                                               |
+| `PDF_TOO_MANY_PAGES`          | 422  | Over `PDF_MAX_PAGES`                                                                                               |
+| `DOCUMENT_TOO_LONG`           | 422  | More chunks than `AI_MAX_CHUNKS`                                                                                   |
+| `INVALID_VIDEO_URL`           | 422  | Not a public single-video YouTube link                                                                             |
+| `VIDEO_PROCESSING_FAILED`     | 502  | The video-capable provider could not process the video                                                             |
+| `AI_RATE_LIMITED`             | 429  | Free-tier limit reached                                                                                            |
+| `AI_INVALID_RESPONSE`         | 502  | Model output did not match the schema                                                                              |
+| `LESSON_VALIDATION_FAILED`    | 502  | No valid lesson could be built from the model output                                                               |
+| `AI_PROVIDER_UNAVAILABLE`     | 503  | Provider unreachable or failing                                                                                    |
+| `AI_INPUT_NOT_SUPPORTED`      | 503  | No configured provider can read this input at all (for example, video with only text-capable providers configured) |
+| `LESSON_NOT_FOUND`            | 404  | Unknown lesson id                                                                                                  |
+| `VALIDATION_ERROR`            | 422  | Malformed request, for example no `file` field                                                                     |
 
 ## Upload security
 
-- PDF only: declared content type must be PDF-compatible and the file must start with `%PDF-`.
-- Size limited twice: an early `413` from the `Content-Length` header, and a hard limit while the
-  file is streamed to disk.
-- Stored under a server-generated name in `DATA_DIR/uploads/`, deleted after extraction. A failed
-  deletion is logged and never hides the real response.
+- PDF: declared content type must be PDF-compatible and the file must start with `%PDF-`.
+- Uploaded video: declared content type and the file's leading bytes (its container signature) must
+  agree, and only for the video types Gemini documents — a `.mp4` name on a different file type is
+  rejected before anything is sent anywhere (`app/ingestion/video.py`).
+- YouTube link: never passed through as written. The API extracts an 11-character video id itself
+  and rebuilds a canonical `https://www.youtube.com/watch?v=<id>` URL, so query strings, redirects,
+  credentials and look-alike hosts cannot survive into the value handed to the AI provider. The link
+  is only ever resolved by the provider — this server never fetches it.
+- Size limited twice for uploads: an early `413` from the `Content-Length` header, and a hard limit
+  while the file is streamed to disk (`MAX_UPLOAD_MB` for PDFs, `MAX_VIDEO_UPLOAD_MB` for video).
+- Stored under a server-generated name in `DATA_DIR/uploads/` or `DATA_DIR/video-uploads/`, deleted
+  once the content has been extracted or handed to the AI provider's Files API. A failed deletion is
+  logged and never hides the real response.
 - Client filenames are reduced to their last path component without control characters and used only
   for display.
-- No shell commands; PDFs are parsed in-process by PyMuPDF.
+- No shell commands; PDFs are parsed in-process by PyMuPDF and videos are never decoded locally.
 
 ## Persistence
 
@@ -427,19 +514,24 @@ to `DATA_DIR/lessons/<id>.json` (default `services/api/.data/`, git-ignored).
 Every log line written during a request carries its `request_id` (also returned in the
 `X-Request-ID` header). The PDF pipeline logs, per document id: upload size, page count, character
 count, extraction time, chunk count, the provider that answered, the generation status, how many
-providers were skipped, AI request count, generation time, validation result and total time.
+providers were skipped, AI request count, generation time, validation result and total time. The
+video/YouTube pipeline logs the same provider and timing facts per lesson id, but never the video's
+URL or filename — only `video_kind` (`youtube`/`upload`) and `video_processing` (`static`/`agentic`).
 Document text, filenames and API keys are never logged. When a provider fails, only the exception
 type is logged, never the response body, which could contain the request or the key.
 
 ## Configuration limits
 
-| Variable                   | Default | Purpose                                        |
-| -------------------------- | ------- | ---------------------------------------------- |
-| `MAX_UPLOAD_MB`            | 15      | Largest accepted upload                        |
-| `PDF_MAX_PAGES`            | 40      | Longer PDFs are rejected before any AI request |
-| `CHUNK_MAX_CHARS`          | 12000   | Maximum characters per chunk                   |
-| `AI_SINGLE_PASS_MAX_CHARS` | 30000   | Documents up to this size use one AI request   |
-| `AI_MAX_CHUNKS`            | 8       | Upper bound on AI requests for long documents  |
+| Variable                     | Default | Purpose                                                                                        |
+| ---------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `MAX_UPLOAD_MB`              | 15      | Largest accepted upload                                                                        |
+| `PDF_MAX_PAGES`              | 40      | Longer PDFs are rejected before any AI request                                                 |
+| `CHUNK_MAX_CHARS`            | 12000   | Maximum characters per chunk                                                                   |
+| `AI_SINGLE_PASS_MAX_CHARS`   | 30000   | Documents up to this size use one AI request                                                   |
+| `AI_MAX_CHUNKS`              | 8       | Upper bound on AI requests for long documents                                                  |
+| `MAX_VIDEO_UPLOAD_MB`        | 200     | Largest accepted video upload                                                                  |
+| `VIDEO_PROCESSING_MODE`      | `auto`  | `auto`, `static` or `agentic` — how thoroughly the model watches a video; see `core/config.py` |
+| `VIDEO_AGENTIC_THRESHOLD_MB` | 20      | In `auto` mode, uploads at or over this size are watched agentically instead of in one pass    |
 
 ## AI provider configuration
 
@@ -476,4 +568,4 @@ closed-source deployment or a permissive project licence. It is only imported in
 ## Deliberately excluded (for now)
 
 Authentication, user accounts, databases, job queues, microservices, Docker orchestration, paid AI
-services, image-generation APIs, OCR, YouTube ingestion and embeddings or vector search.
+services, image-generation APIs, OCR, video transcripts and embeddings or vector search.

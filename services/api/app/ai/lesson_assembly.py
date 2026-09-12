@@ -1,31 +1,46 @@
 """Turns an AI-written `LessonDraft` into a strict, validated `Lesson`.
 
 The model's output is treated as untrusted input:
-- page numbers must exist in the document, and quotes must appear on the page they cite (a quote
-  found on another page is moved there; a quote found nowhere is removed)
-- chart numbers must appear on the pages the chart cites
+- citations are kept only where the source can prove them. What that means differs per input type
+  and lives in `grounding`; this module never learns which input it is assembling.
+- chart numbers must be supported by what the section cites
 - sections and quiz questions that do not fit the lesson format are left out with a warning, never
   repaired or guessed
 - ids, option letters and the schema version are assigned here, not by the model
+
+There is one assembly path for every input type. The two entry points below differ only in which
+`Grounding` they hand to the same assembler.
 """
 
-import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, get_args
 
 from pydantic import TypeAdapter, ValidationError
 
 from app.ai.drafts import DraftQuizQuestion, DraftSection, DraftSourceReference, LessonDraft
+from app.ai.grounding import Grounding, PageGrounding, VideoGrounding
 from app.models.content import ExtractedDocument
-from app.schemas.lesson import Lesson, QuizQuestion, Section, Source, SourceReference
+from app.schemas.lesson import Lesson, QuizQuestion, Section, Source, SourceReference, Subject
 
 MIN_QUIZ_QUESTIONS = 3
 MAX_QUIZ_QUESTIONS = 5
-MIN_EXCERPT_CHARS = 12  # shorter quotes match too many places to prove anything
-MAX_EXCERPT_CHARS = 300
 _OPTION_IDS = "abcdefgh"
-_WHITESPACE = re.compile(r"\s+")
 _SECTION_ADAPTER: TypeAdapter[Section] = TypeAdapter(Section)
+
+# get_args(Subject) rather than retyping the list, so this can never drift from the contract type.
+_ALLOWED_SUBJECTS: frozenset[str] = frozenset(get_args(Subject))
+FALLBACK_SUBJECT: Subject = "general"
+
+
+def _normalize_subject(raw: str) -> Subject:
+    """The model's subject guess, or `general` when it does not confidently match one we know.
+
+    Matched case- and whitespace-insensitively since a model may return "Biology" or " biology ";
+    anything else - empty, unrecognized, or an outright guess we don't recognize - falls back
+    rather than being interpreted further, per the rule that an unconfident subject is `general`.
+    """
+    candidate = raw.strip().lower()
+    return candidate if candidate in _ALLOWED_SUBJECTS else FALLBACK_SUBJECT  # type: ignore[return-value]
 
 
 class LessonAssemblyError(Exception):
@@ -45,7 +60,21 @@ class AssembledLesson:
 def assemble_lesson(
     draft: LessonDraft, *, lesson_id: str, source: Source, document: ExtractedDocument
 ) -> AssembledLesson:
-    assembler = _Assembler(document)
+    """Assemble a lesson whose claims are checked against a paged document's own text."""
+    return _assemble(draft, lesson_id=lesson_id, source=source, grounding=PageGrounding(document))
+
+
+def assemble_lesson_from_video(
+    draft: LessonDraft, *, lesson_id: str, source: Source
+) -> AssembledLesson:
+    """Assemble a lesson from a watched video, where timestamps are the provable locator."""
+    return _assemble(draft, lesson_id=lesson_id, source=source, grounding=VideoGrounding())
+
+
+def _assemble(
+    draft: LessonDraft, *, lesson_id: str, source: Source, grounding: Grounding
+) -> AssembledLesson:
+    assembler = _Assembler(grounding)
     sections, section_ids = assembler.build_sections(draft.sections)
     quiz = assembler.build_quiz(draft.quiz, section_ids)
     try:
@@ -54,6 +83,7 @@ def assemble_lesson(
             title=draft.title.strip(),
             overview=draft.overview.strip(),
             source=source,
+            subject=_normalize_subject(draft.subject),
             sections=sections,
             quiz=quiz,
         )
@@ -71,40 +101,13 @@ def _optional(value: str) -> str | None:
     return value.strip() or None
 
 
-def _normalise(text: str) -> str:
-    return _WHITESPACE.sub(" ", text).strip().casefold()
-
-
-def _shorten(excerpt: str) -> str:
-    if len(excerpt) <= MAX_EXCERPT_CHARS:
-        return excerpt
-    cut = excerpt.rfind(" ", 0, MAX_EXCERPT_CHARS)
-    return excerpt[: cut if cut > 0 else MAX_EXCERPT_CHARS]
-
-
-def _number_in_text(value: float, text: str) -> bool:
-    forms = {f"{value:g}", f"{value:.1f}", f"{value:.2f}"}
-    if value.is_integer():
-        forms |= {str(int(value)), f"{int(value):,}"}
-    return any(re.search(rf"(?<![\d.]){re.escape(form)}(?!\d)", text) for form in forms)
-
-
 class _Assembler:
-    def __init__(self, document: ExtractedDocument) -> None:
-        self._page_count = document.total_pages
-        self._page_text = {page.page_number: _normalise(page.text) for page in document.pages}
+    def __init__(self, grounding: Grounding) -> None:
+        self._grounding = grounding
         self._notes: list[str] = []
-        self._moved_quotes = 0
-        self._removed_quotes = 0
-        self._removed_pages = 0
 
     def warnings(self) -> list[str]:
-        counts = [
-            (self._moved_quotes, "quote(s) cited the wrong page and were moved to the right page"),
-            (self._removed_quotes, "quote(s) could not be found in the PDF and were removed"),
-            (self._removed_pages, "reference(s) to pages that do not exist were removed"),
-        ]
-        return self._notes + [f"{count} {message}." for count, message in counts if count]
+        return self._notes + self._grounding.notes()
 
     # ---- Sections ------------------------------------------------------------------------------
 
@@ -199,12 +202,10 @@ class _Assembler:
     def _chart_content(
         self, draft: DraftSection, _section_id: str, references: list[SourceReference]
     ) -> dict[str, Any]:
-        cited_text = " ".join(self._page_text[ref.page_number] for ref in references)
-        if not cited_text:
-            raise _RejectedError("a chart must cite the page its numbers come from")
         values = [point.value for series in draft.series for point in series.points]
-        if not all(_number_in_text(value, cited_text) for value in values):
-            raise _RejectedError("some of its numbers do not appear on the pages it cites")
+        rejection = self._grounding.chart_rejection(values, references)
+        if rejection is not None:
+            raise _RejectedError(rejection)
         return {
             "chart_type": draft.chart_type.strip().lower(),
             "summary": draft.summary.strip(),
@@ -255,31 +256,10 @@ class _Assembler:
     def references(self, drafts: list[DraftSourceReference]) -> list[SourceReference]:
         resolved: list[SourceReference] = []
         for draft in drafts:
-            reference = self._reference(draft)
+            reference = self._grounding.reference(draft)
             if reference is not None and reference not in resolved:
                 resolved.append(reference)
         return resolved
-
-    def _reference(self, draft: DraftSourceReference) -> SourceReference | None:
-        excerpt = _WHITESPACE.sub(" ", draft.excerpt).strip()
-        if len(excerpt) >= MIN_EXCERPT_CHARS:
-            page = self._page_with_quote(excerpt, preferred=draft.page_number)
-            if page is not None:
-                if page != draft.page_number:
-                    self._moved_quotes += 1
-                return SourceReference(page_number=page, excerpt=_shorten(excerpt))
-        if excerpt:
-            self._removed_quotes += 1
-        if 1 <= draft.page_number <= self._page_count:
-            return SourceReference(page_number=draft.page_number)
-        self._removed_pages += 1
-        return None
-
-    def _page_with_quote(self, excerpt: str, *, preferred: int) -> int | None:
-        needle = _normalise(excerpt)
-        if needle in self._page_text.get(preferred, ""):
-            return preferred
-        return next((number for number, text in self._page_text.items() if needle in text), None)
 
     # ---- Quiz ----------------------------------------------------------------------------------
 

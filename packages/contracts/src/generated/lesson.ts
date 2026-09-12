@@ -8,7 +8,15 @@ export type Id = string;
  * Non-empty plain text. No HTML or Markdown.
  */
 export type PlainText = string;
-export type SourceType = "youtube" | "pdf";
+/**
+ * What the lesson was built from. `pdf` and `video` are uploaded files, described by `filename`; `youtube` is a public video the API never downloads, described by `url`.
+ */
+export type SourceType = "youtube" | "pdf" | "video";
+/**
+ * The normalized academic subject of the lesson. `general` is used whenever the subject cannot be confidently determined from the source material.
+ */
+export type Subject =
+  "biology" | "mathematics" | "physics" | "chemistry" | "history" | "computer_science" | "geography" | "general";
 /**
  * One block of lesson content. `type` determines the shape of `content`.
  */
@@ -55,6 +63,7 @@ export interface Lesson {
   title: PlainText;
   overview: PlainText;
   source: Source;
+  subject: Subject;
   /**
    * Ordered lesson content. Render in array order.
    *

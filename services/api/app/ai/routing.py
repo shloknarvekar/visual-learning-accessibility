@@ -13,19 +13,24 @@ fallback.
 import logging
 
 from app.ai.lesson_assembly import LessonAssemblyError
-from app.ai.lesson_cache import LessonCache, document_cache_key
+from app.ai.lesson_cache import LessonCache
 from app.ai.lesson_generator import (
+    AnyLessonRequest,
     GeneratedLesson,
-    LessonGenerationRequest,
     LessonGenerator,
     LessonProviderName,
 )
-from app.ai.provider import AIProviderError
+from app.ai.provider import AIInputNotSupportedError, AIProviderError
 
 logger = logging.getLogger(__name__)
 
 # Failures that another provider might not have: quota, outage, network, unusable output.
 _RECOVERABLE = (AIProviderError, LessonAssemblyError)
+
+# What to call the material when telling the reader what they are looking at, by where it came
+# from. The document wording is load-bearing for readers who have only ever uploaded a PDF.
+_MATERIAL_NOUN = {"pdf": "the uploaded PDF", "video": "the uploaded video", "youtube": "this video"}
+_CACHED_NOUN = {"pdf": "document", "video": "video", "youtube": "video"}
 
 
 class RoutingLessonGenerator:
@@ -40,14 +45,19 @@ class RoutingLessonGenerator:
         self._cache = cache
         self._demo = demo
 
-    async def generate(self, request: LessonGenerationRequest) -> GeneratedLesson:
-        cache_key = document_cache_key(request.document)
+    async def generate(self, request: AnyLessonRequest) -> GeneratedLesson:
+        cache_key = request.cache_key
         primary = self._live[0][0] if self._live else None
         failures: list[str] = []
 
         for position, (provider, generator) in enumerate(self._live):
             try:
                 generated = await generator.generate(request)
+            except AIInputNotSupportedError:
+                # Not an outage. No later provider in the chain is more likely to cope, and quietly
+                # falling through to cached or demo content would hide a configuration problem
+                # behind a lesson that looks fine. Stop here and let the caller report it.
+                raise
             except _RECOVERABLE as exc:
                 failures.append(f"{provider} ({type(exc).__name__})")
                 logger.warning(
@@ -86,8 +96,9 @@ class RoutingLessonGenerator:
         return await self._without_live_providers(request, cache_key, failures)
 
     async def _without_live_providers(
-        self, request: LessonGenerationRequest, cache_key: str, failures: list[str]
+        self, request: AnyLessonRequest, cache_key: str, failures: list[str]
     ) -> GeneratedLesson:
+        source_type = request.source.source_type
         cached = self._cache.get(cache_key)
         if cached is not None:
             logger.info(
@@ -96,7 +107,7 @@ class RoutingLessonGenerator:
             )
             return GeneratedLesson(
                 lesson=cached.model_copy(update={"id": request.lesson_id}, deep=True),
-                warnings=[_cache_warning(failures)],
+                warnings=[_cache_warning(failures, source_type)],
                 provider="cache",
                 generation_status="cached",
             )
@@ -110,7 +121,7 @@ class RoutingLessonGenerator:
         demo = await self._demo.generate(request)
         return GeneratedLesson(
             lesson=demo.lesson,
-            warnings=[_demo_warning(failures)],
+            warnings=[_demo_warning(failures, source_type)],
             provider="demo",
             generation_status="demo",
         )
@@ -126,19 +137,22 @@ def _fallback_warning(
     )
 
 
-def _cache_warning(failures: list[str]) -> str:
+def _cache_warning(failures: list[str], source_type: str) -> str:
     skipped = ", ".join(failures) or "no provider was configured"
+    noun = _CACHED_NOUN.get(source_type, "material")
     return (
         f"No AI provider was available ({skipped}). This lesson was served from an earlier "
-        "successful generation of the same document."
+        f"successful generation of the same {noun}."
     )
 
 
-def _demo_warning(failures: list[str]) -> str:
+def _demo_warning(failures: list[str], source_type: str) -> str:
     skipped = ", ".join(failures) or "no provider was configured"
+    noun = _CACHED_NOUN.get(source_type, "material")
+    material = _MATERIAL_NOUN.get(source_type, "what you sent")
     return (
-        f"No AI provider was available ({skipped}) and this document has no cached lesson. "
-        "This is fixed demo content and does not describe the uploaded PDF."
+        f"No AI provider was available ({skipped}) and this {noun} has no cached lesson. "
+        f"This is fixed demo content and does not describe {material}."
     )
 
 
