@@ -1,6 +1,0 @@
-# Normalise line endings so Windows and macOS contributors produce identical diffs.
-* text=auto eol=lf
-*.png binary
-*.jpg binary
-*.ico binary
-*.pdf binary

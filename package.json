@@ -1,26 +1,26 @@
 {
-  "name": "visual-learning-accessibility",
-  "version": "0.1.0",
+  "name": "visual-learn",
+  "version": "1.0.0",
   "private": true,
-  "description": "AI-powered visual-first learning platform for Deaf and hard-of-hearing students.",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": ">=20.9"
-  },
   "scripts": {
-    "dev:web": "npm run dev -w @visual-learning/web",
-    "build:web": "npm run build -w @visual-learning/web",
-    "lint:web": "npm run lint -w @visual-learning/web",
-    "contracts:validate": "npm run validate -w @visual-learning/contracts",
-    "contracts:generate": "npm run generate -w @visual-learning/contracts",
-    "contracts:check": "npm run check -w @visual-learning/contracts",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "devDependencies": {
-    "prettier": "^3.9.6"
-  }
+  "dependencies": {
+    "@types/node": "22.15.21",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "lucide-react": "0.511.0",
+    "motion": "12.23.12",
+    "next": "16.3.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "5.8.3",
+    "tailwindcss": "4.1.7",
+    "@tailwindcss/postcss": "4.1.7",
+    "gsap": "3.13.0"
+  },
+  "devDependencies": {}
 }

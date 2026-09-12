@@ -1,9 +1,0 @@
-# Python is formatted by ruff.
-services/api
-
-# Generated or tool-owned files.
-packages/contracts/src/generated
-package-lock.json
-apps/web/next-env.d.ts
-apps/web/AGENTS.md
-apps/web/CLAUDE.md
