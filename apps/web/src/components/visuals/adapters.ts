@@ -18,7 +18,7 @@ import type {
  */
 export function adaptSectionToVisualization(
   section: Section,
-  subject?: string
+  subject?: string,
 ): VisualizationData | null {
   if (!section) return null;
 

@@ -54,7 +54,7 @@ export const VisualConceptCard: React.FC<VisualConceptCardProps> = ({ data, them
             Definition:
           </span>
           <p className="italic font-serif text-base sm:text-lg" style={{ color: theme.colors.ink }}>
-            "{data.definition}"
+            &ldquo;{data.definition}&rdquo;
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export const VisualConceptCard: React.FC<VisualConceptCardProps> = ({ data, them
             className="text-xs font-bold italic font-serif flex-shrink-0"
             style={{ color: theme.colors.handwritingInk }}
           >
-            "High exam probability!"
+            &ldquo;High exam probability!&rdquo;
           </span>
         </div>
       )}

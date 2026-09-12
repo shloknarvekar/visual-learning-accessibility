@@ -208,8 +208,13 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ data, theme: propT
                   {(() => {
                     const points = data.data.map((item, idx) => {
                       const count = data.data.length;
-                      const x = paddingLeft + (count > 1 ? (idx / (count - 1)) * chartWidth : chartWidth / 2);
-                      const ratio = Math.max(0, (item.value - minValue) / (maxValue - minValue || 1));
+                      const x =
+                        paddingLeft +
+                        (count > 1 ? (idx / (count - 1)) * chartWidth : chartWidth / 2);
+                      const ratio = Math.max(
+                        0,
+                        (item.value - minValue) / (maxValue - minValue || 1),
+                      );
                       const y = paddingTop + chartHeight - ratio * chartHeight;
                       return { x, y, item };
                     });
@@ -241,7 +246,11 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ data, theme: propT
                                 cx={p.x}
                                 cy={p.y}
                                 r={isHovered ? 7 : 5}
-                                fill={isHovered ? theme.colors.chartSecondary : theme.colors.chartPrimary}
+                                fill={
+                                  isHovered
+                                    ? theme.colors.chartSecondary
+                                    : theme.colors.chartPrimary
+                                }
                                 stroke={theme.colors.paperBg}
                                 strokeWidth="2"
                               />
@@ -296,7 +305,10 @@ export const ChartRenderer: React.FC<ChartRendererProps> = ({ data, theme: propT
         }}
       >
         <div className="flex items-start gap-2">
-          <span className="font-bold uppercase tracking-wider flex-shrink-0 font-mono" style={{ color: theme.colors.primary }}>
+          <span
+            className="font-bold uppercase tracking-wider flex-shrink-0 font-mono"
+            style={{ color: theme.colors.primary }}
+          >
             WHAT THIS SHOWS:
           </span>
           <p className="leading-relaxed" style={{ color: theme.colors.ink }}>

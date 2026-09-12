@@ -9,7 +9,10 @@ interface ComparisonRendererProps {
   theme?: SubjectTheme;
 }
 
-export const ComparisonRenderer: React.FC<ComparisonRendererProps> = ({ data, theme: propTheme }) => {
+export const ComparisonRenderer: React.FC<ComparisonRendererProps> = ({
+  data,
+  theme: propTheme,
+}) => {
   const theme = propTheme || getSubjectTheme(data?.subject);
 
   if (!data || !data.rows || data.rows.length === 0) {
@@ -25,7 +28,10 @@ export const ComparisonRenderer: React.FC<ComparisonRendererProps> = ({ data, th
   return (
     <section aria-label={data.title || "Comparison Table"} className="w-full space-y-4 font-sans">
       {data.description && (
-        <p className="text-sm leading-relaxed max-w-3xl mb-3 font-sans" style={{ color: theme.colors.mutedInk }}>
+        <p
+          className="text-sm leading-relaxed max-w-3xl mb-3 font-sans"
+          style={{ color: theme.colors.mutedInk }}
+        >
           {data.description}
         </p>
       )}
@@ -101,8 +107,11 @@ export const ComparisonRenderer: React.FC<ComparisonRendererProps> = ({ data, th
         <span className="text-xs font-mono" style={{ color: theme.colors.primary }}>
           ★ Highlighted cells mark fundamental pathway contrasts.
         </span>
-        <span className="text-xs sm:text-sm font-bold italic font-serif" style={{ color: theme.colors.handwritingInk }}>
-          "Opposite complementary contrasts! 🔄"
+        <span
+          className="text-xs sm:text-sm font-bold italic font-serif"
+          style={{ color: theme.colors.handwritingInk }}
+        >
+          &ldquo;Opposite complementary contrasts! 🔄&rdquo;
         </span>
       </div>
     </section>

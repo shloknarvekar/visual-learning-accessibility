@@ -40,10 +40,13 @@ class VisualizationErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
         <div className="w-full max-w-5xl mx-auto p-6 bg-rose-50/60 rounded-2xl border border-rose-200 text-[#172033]">
           <div className="flex items-center gap-3 mb-2 text-rose-800 font-bold text-sm">
             <span>⚠️</span>
-            <span>Unable to render visualization note ({this.props.fallbackTitle || "Unknown"})</span>
+            <span>
+              Unable to render visualization note ({this.props.fallbackTitle || "Unknown"})
+            </span>
           </div>
           <p className="text-xs text-[#5B6472]">
-            An error occurred while displaying this study component. The rest of the lesson content remains unaffected.
+            An error occurred while displaying this study component. The rest of the lesson content
+            remains unaffected.
           </p>
         </div>
       );

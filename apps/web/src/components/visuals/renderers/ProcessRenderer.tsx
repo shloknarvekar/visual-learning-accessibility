@@ -28,7 +28,10 @@ export const ProcessRenderer: React.FC<ProcessRendererProps> = ({ data, theme: p
   return (
     <section aria-label={data.title || "Process Flowchart"} className="w-full space-y-6">
       {data.description && (
-        <p className="text-sm leading-relaxed max-w-3xl mb-4 font-sans" style={{ color: theme.colors.mutedInk }}>
+        <p
+          className="text-sm leading-relaxed max-w-3xl mb-4 font-sans"
+          style={{ color: theme.colors.mutedInk }}
+        >
           {data.description}
         </p>
       )}
@@ -58,7 +61,7 @@ export const ProcessRenderer: React.FC<ProcessRendererProps> = ({ data, theme: p
             className="text-base font-bold my-1 italic font-serif"
             style={{ color: theme.colors.handwritingInk }}
           >
-            "{annotations[0] || "initial input stage ↓"}"
+            &ldquo;{annotations[0] || "initial input stage ↓"}&rdquo;
           </span>
         </div>
 
@@ -112,7 +115,10 @@ export const ProcessRenderer: React.FC<ProcessRendererProps> = ({ data, theme: p
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-bold mb-1.5 leading-snug font-sans" style={{ color: theme.colors.ink }}>
+                  <h3
+                    className="text-sm font-bold mb-1.5 leading-snug font-sans"
+                    style={{ color: theme.colors.ink }}
+                  >
                     {step.label}
                   </h3>
 
@@ -129,7 +135,7 @@ export const ProcessRenderer: React.FC<ProcessRendererProps> = ({ data, theme: p
                     className="text-xs font-bold italic font-serif mt-2 text-center"
                     style={{ color: theme.colors.handwritingInk }}
                   >
-                    "{annotation}"
+                    &ldquo;{annotation}&rdquo;
                   </span>
                 )}
 
@@ -162,7 +168,7 @@ export const ProcessRenderer: React.FC<ProcessRendererProps> = ({ data, theme: p
             className="text-base font-bold my-1 italic font-serif"
             style={{ color: theme.colors.handwritingInk }}
           >
-            "{annotations[annotations.length - 1] || "final output state ↓"}"
+            &ldquo;{annotations[annotations.length - 1] || "final output state ↓"}&rdquo;
           </span>
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-xs mb-1 font-bold"

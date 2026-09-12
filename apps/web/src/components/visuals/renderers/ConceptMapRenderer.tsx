@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import type { ConceptMapVisualization } from "../types";
 import { getSubjectTheme, type SubjectTheme } from "../subjectThemes";
 
@@ -13,7 +13,7 @@ export function computeHierarchicalLayout(
   nodes: ConceptMapVisualization["nodes"] = [],
   edges: ConceptMapVisualization["edges"] = [],
   width = 1000,
-  height = 540
+  height = 540,
 ): {
   positions: Record<string, { x: number; y: number }>;
   centralNodeId: string | null;
@@ -135,8 +135,8 @@ export function computeHierarchicalLayout(
         typeof nodeObj?.y === "number"
           ? nodeObj.y
           : countInLevel > 1
-          ? Math.round(paddingY + (rowIdx + 0.5) * stepY - 25)
-          : Math.round(height / 2 - 25);
+            ? Math.round(paddingY + (rowIdx + 0.5) * stepY - 25)
+            : Math.round(height / 2 - 25);
 
       map[id] = { x, y };
     });
@@ -145,7 +145,10 @@ export function computeHierarchicalLayout(
   return { positions: map, centralNodeId };
 }
 
-export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, theme: propTheme }) => {
+export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({
+  data,
+  theme: propTheme,
+}) => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -157,16 +160,15 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
     return computeHierarchicalLayout(data?.nodes, data?.edges, 1000, 540);
   }, [data]);
 
-  const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>(
-    layoutResult.positions
+  const [userPositions, setUserPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const nodePositions = useMemo(
+    () => ({ ...layoutResult.positions, ...userPositions }),
+    [layoutResult.positions, userPositions],
   );
-
-  useEffect(() => {
-    setNodePositions(layoutResult.positions);
-  }, [layoutResult]);
 
   const draggingNodeRef = useRef<string | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
 
   if (!data || !data.nodes || data.nodes.length === 0) {
     return (
@@ -182,6 +184,7 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
     e.stopPropagation();
     setSelectedNodeId(id);
     draggingNodeRef.current = id;
+    setIsDragging(true);
     const currentPos = nodePositions[id] || { x: 0, y: 0 };
     dragOffsetRef.current = {
       x: e.clientX / zoom - currentPos.x,
@@ -194,7 +197,7 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
     const id = draggingNodeRef.current;
     const newX = e.clientX / zoom - dragOffsetRef.current.x;
     const newY = e.clientY / zoom - dragOffsetRef.current.y;
-    setNodePositions((prev) => ({
+    setUserPositions((prev) => ({
       ...prev,
       [id]: { x: Math.max(20, Math.min(1100, newX)), y: Math.max(20, Math.min(600, newY)) },
     }));
@@ -202,12 +205,13 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
 
   const handleMouseUp = () => {
     draggingNodeRef.current = null;
+    setIsDragging(false);
   };
 
   const handleReset = () => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setNodePositions(layoutResult.positions);
+    setUserPositions({});
   };
 
   const nodeStyles = theme.colors.nodeBgs;
@@ -215,7 +219,10 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
   return (
     <section aria-label={data.title || "Concept Map"} className="w-full space-y-4 font-sans">
       {data.description && (
-        <p className="text-sm leading-relaxed max-w-3xl mb-2 font-sans" style={{ color: theme.colors.mutedInk }}>
+        <p
+          className="text-sm leading-relaxed max-w-3xl mb-2 font-sans"
+          style={{ color: theme.colors.mutedInk }}
+        >
           {data.description}
         </p>
       )}
@@ -258,7 +265,7 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
           className="text-xs italic font-serif font-bold hidden sm:inline"
           style={{ color: theme.colors.handwritingInk }}
         >
-          "Drag nodes to rearrange • Click for details"
+          &ldquo;Drag nodes to rearrange • Click for details&rdquo;
         </span>
       </div>
 
@@ -313,7 +320,10 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
                   {outgoingEdges.length > 0 && (
                     <div className="text-xs" style={{ color: theme.colors.handwritingInk }}>
                       <span className="font-bold font-mono">Relationships:</span>
-                      <ul className="list-disc list-inside ml-1" style={{ color: theme.colors.mutedInk }}>
+                      <ul
+                        className="list-disc list-inside ml-1"
+                        style={{ color: theme.colors.mutedInk }}
+                      >
                         {outgoingEdges.map((e, idx) => {
                           const targetNode = data.nodes.find((n) => n.id === e.target);
                           return (
@@ -397,19 +407,46 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
               style={{
                 transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
                 transformOrigin: "center center",
-                transition: draggingNodeRef.current ? "none" : "transform 0.15s ease-out",
+                transition: isDragging ? "none" : "transform 0.15s ease-out",
               }}
             >
               <defs>
-                <pattern id={`subjectGrid-${theme.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+                <pattern
+                  id={`subjectGrid-${theme.id}`}
+                  width="24"
+                  height="24"
+                  patternUnits="userSpaceOnUse"
+                >
                   {theme.colors.paperGridPattern === "graph" ? (
-                    <path d="M 24 0 L 0 0 0 24" fill="none" stroke={theme.colors.gridColor} strokeWidth="0.8" />
+                    <path
+                      d="M 24 0 L 0 0 0 24"
+                      fill="none"
+                      stroke={theme.colors.gridColor}
+                      strokeWidth="0.8"
+                    />
                   ) : theme.colors.paperGridPattern === "hex" ? (
-                    <path d="M 12 0 L 24 7 L 24 21 L 12 28 L 0 21 L 0 7 Z" fill="none" stroke={theme.colors.gridColor} strokeWidth="0.6" />
+                    <path
+                      d="M 12 0 L 24 7 L 24 21 L 12 28 L 0 21 L 0 7 Z"
+                      fill="none"
+                      stroke={theme.colors.gridColor}
+                      strokeWidth="0.6"
+                    />
                   ) : theme.colors.paperGridPattern === "contour" ? (
-                    <path d="M 0 12 Q 6 4 12 12 T 24 12" fill="none" stroke={theme.colors.gridColor} strokeWidth="0.8" />
+                    <path
+                      d="M 0 12 Q 6 4 12 12 T 24 12"
+                      fill="none"
+                      stroke={theme.colors.gridColor}
+                      strokeWidth="0.8"
+                    />
                   ) : theme.colors.paperGridPattern === "lines" ? (
-                    <line x1="0" y1="24" x2="24" y2="24" stroke={theme.colors.gridColor} strokeWidth="0.8" />
+                    <line
+                      x1="0"
+                      y1="24"
+                      x2="24"
+                      y2="24"
+                      stroke={theme.colors.gridColor}
+                      strokeWidth="0.8"
+                    />
                   ) : (
                     <circle cx="12" cy="12" r="0.9" fill={theme.colors.gridColor} />
                   )}
@@ -523,13 +560,13 @@ export const ConceptMapRenderer: React.FC<ConceptMapRendererProps> = ({ data, th
                           borderColor: isCentral
                             ? theme.colors.primary
                             : isSelected
-                            ? theme.colors.handwritingInk
-                            : undefined,
+                              ? theme.colors.handwritingInk
+                              : undefined,
                           boxShadow: isCentral
                             ? `0 0 0 2px ${theme.colors.primary}33`
                             : isSelected
-                            ? `0 4px 12px ${theme.colors.handwritingInk}30`
-                            : "none",
+                              ? `0 4px 12px ${theme.colors.handwritingInk}30`
+                              : "none",
                         }}
                       >
                         <div className="flex items-center justify-between">

@@ -48,7 +48,8 @@ export interface SubjectTheme {
   };
   visualMotifs: {
     icon: string;
-    svgMotifType: "leaf" | "math" | "physics" | "chemistry" | "history" | "code" | "geography" | "default";
+    svgMotifType:
+      "leaf" | "math" | "physics" | "chemistry" | "history" | "code" | "geography" | "default";
     symbolWatermark: string[];
     startInputLabel: string;
     startIcon: string;
@@ -94,10 +95,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#f59e0b",
       calloutText: "#5c4033",
       nodeBgs: [
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
-        { bg: "bg-sky-100/90", border: "border-sky-400", text: "text-sky-950", tag: "text-sky-800" },
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
-        { bg: "bg-emerald-100/90", border: "border-emerald-400", text: "text-emerald-950", tag: "text-emerald-800" },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
+        {
+          bg: "bg-sky-100/90",
+          border: "border-sky-400",
+          text: "text-sky-950",
+          tag: "text-sky-800",
+        },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
+        {
+          bg: "bg-emerald-100/90",
+          border: "border-emerald-400",
+          text: "text-emerald-950",
+          tag: "text-emerald-800",
+        },
       ],
       chartPrimary: "#16a34a",
       chartSecondary: "#0284c7",
@@ -118,7 +139,8 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       intuitionQuote: '"Think of it as: Light Energy → Chemical Fuel (ATP) → Glucose Sugar"',
       takeawayQuote: '"Review daily for active recall! 🌿"',
       keyRevisionTitle: "KEY BIOLOGY REVISION NOTE:",
-      keyRevisionNote: "Light-dependent reactions harvest photon energy to generate molecular ATP + NADPH fuel for carbon fixation.",
+      keyRevisionNote:
+        "Light-dependent reactions harvest photon energy to generate molecular ATP + NADPH fuel for carbon fixation.",
       annotations: [
         "energy captured here ↓",
         "water split into O₂ & H⁺",
@@ -159,10 +181,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#6366f1",
       calloutText: "#1e1b4b",
       nodeBgs: [
-        { bg: "bg-indigo-100/90", border: "border-indigo-400", text: "text-indigo-950", tag: "text-indigo-800" },
-        { bg: "bg-blue-100/90", border: "border-blue-400", text: "text-blue-950", tag: "text-blue-800" },
-        { bg: "bg-slate-100/90", border: "border-slate-400", text: "text-slate-950", tag: "text-slate-800" },
-        { bg: "bg-sky-100/90", border: "border-sky-400", text: "text-sky-950", tag: "text-sky-800" },
+        {
+          bg: "bg-indigo-100/90",
+          border: "border-indigo-400",
+          text: "text-indigo-950",
+          tag: "text-indigo-800",
+        },
+        {
+          bg: "bg-blue-100/90",
+          border: "border-blue-400",
+          text: "text-blue-950",
+          tag: "text-blue-800",
+        },
+        {
+          bg: "bg-slate-100/90",
+          border: "border-slate-400",
+          text: "text-slate-950",
+          tag: "text-slate-800",
+        },
+        {
+          bg: "bg-sky-100/90",
+          border: "border-sky-400",
+          text: "text-sky-950",
+          tag: "text-sky-800",
+        },
       ],
       chartPrimary: "#2563eb",
       chartSecondary: "#4f46e5",
@@ -183,7 +225,8 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       intuitionQuote: '"Think of it as: Input Domain → Transformation Function → Output Codomain"',
       takeawayQuote: '"Verify steps with active geometric substitution! 📐"',
       keyRevisionTitle: "KEY MATHEMATICAL DERIVATION:",
-      keyRevisionNote: "Each transformation preserves equality while reducing algebraic complexity to isolate target variables.",
+      keyRevisionNote:
+        "Each transformation preserves equality while reducing algebraic complexity to isolate target variables.",
       annotations: [
         "given parameters ↓",
         "apply transformation rule",
@@ -224,10 +267,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#d97706",
       calloutText: "#78350f",
       nodeBgs: [
-        { bg: "bg-sky-100/90", border: "border-sky-400", text: "text-sky-950", tag: "text-sky-800" },
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
-        { bg: "bg-blue-100/90", border: "border-blue-400", text: "text-blue-950", tag: "text-blue-800" },
-        { bg: "bg-orange-100/90", border: "border-orange-400", text: "text-orange-950", tag: "text-orange-800" },
+        {
+          bg: "bg-sky-100/90",
+          border: "border-sky-400",
+          text: "text-sky-950",
+          tag: "text-sky-800",
+        },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
+        {
+          bg: "bg-blue-100/90",
+          border: "border-blue-400",
+          text: "text-blue-950",
+          tag: "text-blue-800",
+        },
+        {
+          bg: "bg-orange-100/90",
+          border: "border-orange-400",
+          text: "text-orange-950",
+          tag: "text-orange-800",
+        },
       ],
       chartPrimary: "#0284c7",
       chartSecondary: "#d97706",
@@ -248,7 +311,8 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       intuitionQuote: '"Think of it as: Applied Force Vector → Energy Transfer → Net Work Done"',
       takeawayQuote: '"Conservation of Energy always holds! ⚡"',
       keyRevisionTitle: "KEY PHYSICS PRINCIPLE:",
-      keyRevisionNote: "Vector summation of external forces governs momentum conservation and kinetic energy exchange.",
+      keyRevisionNote:
+        "Vector summation of external forces governs momentum conservation and kinetic energy exchange.",
       annotations: [
         "applied force vector ↓",
         "overcomes frictional inertia",
@@ -289,10 +353,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#0d9488",
       calloutText: "#134e4a",
       nodeBgs: [
-        { bg: "bg-teal-100/90", border: "border-teal-400", text: "text-teal-950", tag: "text-teal-800" },
-        { bg: "bg-purple-100/90", border: "border-purple-400", text: "text-purple-950", tag: "text-purple-800" },
-        { bg: "bg-cyan-100/90", border: "border-cyan-400", text: "text-cyan-950", tag: "text-cyan-800" },
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
+        {
+          bg: "bg-teal-100/90",
+          border: "border-teal-400",
+          text: "text-teal-950",
+          tag: "text-teal-800",
+        },
+        {
+          bg: "bg-purple-100/90",
+          border: "border-purple-400",
+          text: "text-purple-950",
+          tag: "text-purple-800",
+        },
+        {
+          bg: "bg-cyan-100/90",
+          border: "border-cyan-400",
+          text: "text-cyan-950",
+          tag: "text-cyan-800",
+        },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
       ],
       chartPrimary: "#0d9488",
       chartSecondary: "#7c3aed",
@@ -310,10 +394,12 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       startIcon: "⚗️",
       endOutputLabel: "STABLE PRODUCT MOLECULES",
       endIcon: "🧪",
-      intuitionQuote: '"Think of it as: Reactants + Activation Energy → Transition Complex → Synthesized Products"',
+      intuitionQuote:
+        '"Think of it as: Reactants + Activation Energy → Transition Complex → Synthesized Products"',
       takeawayQuote: '"Catalysts lower activation energy barrier! ⚗️"',
       keyRevisionTitle: "KEY REACTION DYNAMICS:",
-      keyRevisionNote: "Substrate binding lowers the transition state energy barrier, accelerating product synthesis rate.",
+      keyRevisionNote:
+        "Substrate binding lowers the transition state energy barrier, accelerating product synthesis rate.",
       annotations: [
         "reactant collision ↓",
         "exceeds activation threshold",
@@ -354,10 +440,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#b45309",
       calloutText: "#451a03",
       nodeBgs: [
-        { bg: "bg-amber-100/90", border: "border-amber-500", text: "text-amber-950", tag: "text-amber-900" },
-        { bg: "bg-orange-100/90", border: "border-orange-500", text: "text-orange-950", tag: "text-orange-900" },
-        { bg: "bg-stone-100/90", border: "border-stone-400", text: "text-stone-950", tag: "text-stone-800" },
-        { bg: "bg-rose-100/90", border: "border-rose-400", text: "text-rose-950", tag: "text-rose-900" },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-500",
+          text: "text-amber-950",
+          tag: "text-amber-900",
+        },
+        {
+          bg: "bg-orange-100/90",
+          border: "border-orange-500",
+          text: "text-orange-950",
+          tag: "text-orange-900",
+        },
+        {
+          bg: "bg-stone-100/90",
+          border: "border-stone-400",
+          text: "text-stone-950",
+          tag: "text-stone-800",
+        },
+        {
+          bg: "bg-rose-100/90",
+          border: "border-rose-400",
+          text: "text-rose-950",
+          tag: "text-rose-900",
+        },
       ],
       chartPrimary: "#78350f",
       chartSecondary: "#991b1b",
@@ -375,10 +481,12 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       startIcon: "📜",
       endOutputLabel: "LONG-TERM HISTORICAL CONSEQUENCES",
       endIcon: "🏛️",
-      intuitionQuote: '"Think of it as: Structural Causes → Precipitating Event → Institutional Change"',
+      intuitionQuote:
+        '"Think of it as: Structural Causes → Precipitating Event → Institutional Change"',
       takeawayQuote: '"Analyze primary archival sources carefully! 📜"',
       keyRevisionTitle: "KEY HISTORICAL ANALYSIS:",
-      keyRevisionNote: "Economic shifts combined with ideological movements created irreversible systemic transformation.",
+      keyRevisionNote:
+        "Economic shifts combined with ideological movements created irreversible systemic transformation.",
       annotations: [
         "underlying socio-economic tension ↓",
         "catalyst event triggers crisis",
@@ -419,10 +527,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#3b82f6",
       calloutText: "#1e3a8a",
       nodeBgs: [
-        { bg: "bg-slate-100/90", border: "border-slate-400", text: "text-slate-950", tag: "text-slate-800" },
-        { bg: "bg-blue-100/90", border: "border-blue-400", text: "text-blue-950", tag: "text-blue-800" },
-        { bg: "bg-emerald-100/90", border: "border-emerald-400", text: "text-emerald-950", tag: "text-emerald-800" },
-        { bg: "bg-cyan-100/90", border: "border-cyan-400", text: "text-cyan-950", tag: "text-cyan-800" },
+        {
+          bg: "bg-slate-100/90",
+          border: "border-slate-400",
+          text: "text-slate-950",
+          tag: "text-slate-800",
+        },
+        {
+          bg: "bg-blue-100/90",
+          border: "border-blue-400",
+          text: "text-blue-950",
+          tag: "text-blue-800",
+        },
+        {
+          bg: "bg-emerald-100/90",
+          border: "border-emerald-400",
+          text: "text-emerald-950",
+          tag: "text-emerald-800",
+        },
+        {
+          bg: "bg-cyan-100/90",
+          border: "border-cyan-400",
+          text: "text-cyan-950",
+          tag: "text-cyan-800",
+        },
       ],
       chartPrimary: "#2563eb",
       chartSecondary: "#059669",
@@ -440,10 +568,12 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       startIcon: "{ }",
       endOutputLabel: "OPTIMIZED RETURN VALUE / SORTED OUTPUT",
       endIcon: "</>",
-      intuitionQuote: '"Think of it as: Input Data Structure → Algorithmic Processing → O(N) Output State"',
+      intuitionQuote:
+        '"Think of it as: Input Data Structure → Algorithmic Processing → O(N) Output State"',
       takeawayQuote: '"Strive for logarithmic time complexity O(log N)! ⌘"',
       keyRevisionTitle: "KEY ALGORITHMIC ANALYSIS:",
-      keyRevisionNote: "Divide-and-conquer strategy reduces search space by half in each recursive iteration step.",
+      keyRevisionNote:
+        "Divide-and-conquer strategy reduces search space by half in each recursive iteration step.",
       annotations: [
         "load input array ↓",
         "evaluate condition check",
@@ -484,10 +614,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#15803d",
       calloutText: "#14532d",
       nodeBgs: [
-        { bg: "bg-emerald-100/90", border: "border-emerald-400", text: "text-emerald-950", tag: "text-emerald-800" },
-        { bg: "bg-sky-100/90", border: "border-sky-400", text: "text-sky-950", tag: "text-sky-800" },
-        { bg: "bg-lime-100/90", border: "border-lime-400", text: "text-lime-950", tag: "text-lime-800" },
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
+        {
+          bg: "bg-emerald-100/90",
+          border: "border-emerald-400",
+          text: "text-emerald-950",
+          tag: "text-emerald-800",
+        },
+        {
+          bg: "bg-sky-100/90",
+          border: "border-sky-400",
+          text: "text-sky-950",
+          tag: "text-sky-800",
+        },
+        {
+          bg: "bg-lime-100/90",
+          border: "border-lime-400",
+          text: "text-lime-950",
+          tag: "text-lime-800",
+        },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
       ],
       chartPrimary: "#15803d",
       chartSecondary: "#0284c7",
@@ -505,10 +655,12 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       startIcon: "🗺️",
       endOutputLabel: "GEOMORPHIC LANDFORM / SPATIAL PATTERN",
       endIcon: "⛰️",
-      intuitionQuote: '"Think of it as: Tectonic / Climate Drivers → Environmental Interaction → Spatial Landform"',
+      intuitionQuote:
+        '"Think of it as: Tectonic / Climate Drivers → Environmental Interaction → Spatial Landform"',
       takeawayQuote: '"Spatial distribution reflects environmental feedback loops! 🗺️"',
       keyRevisionTitle: "KEY GEOGRAPHIC INSIGHT:",
-      keyRevisionNote: "Plate boundary interactions combined with atmospheric weathering shape regional landforms over geological epochs.",
+      keyRevisionNote:
+        "Plate boundary interactions combined with atmospheric weathering shape regional landforms over geological epochs.",
       annotations: [
         "solar radiation / tectonic drive ↓",
         "evaporation & cloud transport",
@@ -549,10 +701,30 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       calloutBorder: "#f59e0b",
       calloutText: "#5c4033",
       nodeBgs: [
-        { bg: "bg-amber-100/90", border: "border-amber-400", text: "text-amber-950", tag: "text-amber-800" },
-        { bg: "bg-sky-100/90", border: "border-sky-400", text: "text-sky-950", tag: "text-sky-800" },
-        { bg: "bg-slate-100/90", border: "border-slate-400", text: "text-slate-950", tag: "text-slate-800" },
-        { bg: "bg-emerald-100/90", border: "border-emerald-400", text: "text-emerald-950", tag: "text-emerald-800" },
+        {
+          bg: "bg-amber-100/90",
+          border: "border-amber-400",
+          text: "text-amber-950",
+          tag: "text-amber-800",
+        },
+        {
+          bg: "bg-sky-100/90",
+          border: "border-sky-400",
+          text: "text-sky-950",
+          tag: "text-sky-800",
+        },
+        {
+          bg: "bg-slate-100/90",
+          border: "border-slate-400",
+          text: "text-slate-950",
+          tag: "text-slate-800",
+        },
+        {
+          bg: "bg-emerald-100/90",
+          border: "border-emerald-400",
+          text: "text-emerald-950",
+          tag: "text-emerald-800",
+        },
       ],
       chartPrimary: "#1d4ed8",
       chartSecondary: "#0284c7",
@@ -573,7 +745,8 @@ export const subjectThemes: Record<SubjectType | "default", SubjectTheme> = {
       intuitionQuote: '"Think of it as: Core Concept → Structuring Information → Mastery & Recall"',
       takeawayQuote: '"Consistent daily active recall yields long-term retention! 📚"',
       keyRevisionTitle: "KEY STUDY TAKEAWAY:",
-      keyRevisionNote: "Synthesizing complex topics into structured visual diagrams accelerates conceptual understanding.",
+      keyRevisionNote:
+        "Synthesizing complex topics into structured visual diagrams accelerates conceptual understanding.",
       annotations: [
         "input concept definition ↓",
         "examine components",
@@ -598,25 +771,62 @@ export function getSubjectTheme(subject?: string | null): SubjectTheme {
   }
 
   // Alias checks
-  if (key.includes("bio") || key.includes("botany") || key.includes("zoology") || key.includes("life")) {
+  if (
+    key.includes("bio") ||
+    key.includes("botany") ||
+    key.includes("zoology") ||
+    key.includes("life")
+  ) {
     return subjectThemes.biology;
   }
-  if (key.includes("math") || key.includes("algebra") || key.includes("calculus") || key.includes("geom")) {
+  if (
+    key.includes("math") ||
+    key.includes("algebra") ||
+    key.includes("calculus") ||
+    key.includes("geom")
+  ) {
     return subjectThemes.mathematics;
   }
-  if (key.includes("phys") || key.includes("mech") || key.includes("wave") || key.includes("optics")) {
+  if (
+    key.includes("phys") ||
+    key.includes("mech") ||
+    key.includes("wave") ||
+    key.includes("optics")
+  ) {
     return subjectThemes.physics;
   }
-  if (key.includes("chem") || key.includes("molecul") || key.includes("reaction") || key.includes("organic")) {
+  if (
+    key.includes("chem") ||
+    key.includes("molecul") ||
+    key.includes("reaction") ||
+    key.includes("organic")
+  ) {
     return subjectThemes.chemistry;
   }
-  if (key.includes("hist") || key.includes("archive") || key.includes("civic") || key.includes("epoch")) {
+  if (
+    key.includes("hist") ||
+    key.includes("archive") ||
+    key.includes("civic") ||
+    key.includes("epoch")
+  ) {
     return subjectThemes.history;
   }
-  if (key.includes("cs") || key.includes("comp") || key.includes("code") || key.includes("algorithm") || key.includes("software")) {
+  if (
+    key.includes("cs") ||
+    key.includes("comp") ||
+    key.includes("code") ||
+    key.includes("algorithm") ||
+    key.includes("software")
+  ) {
     return subjectThemes.computer_science;
   }
-  if (key.includes("geo") || key.includes("map") || key.includes("earth") || key.includes("terrain") || key.includes("spatial")) {
+  if (
+    key.includes("geo") ||
+    key.includes("map") ||
+    key.includes("earth") ||
+    key.includes("terrain") ||
+    key.includes("spatial")
+  ) {
     return subjectThemes.geography;
   }
 
