@@ -4,11 +4,11 @@
 
 A monorepo with two deployable apps and one shared contract:
 
-| Part                 | Tech                                          | Responsibility                                            | Owner                                    |
-| -------------------- | --------------------------------------------- | --------------------------------------------------------- | ---------------------------------------- |
-| `apps/web`           | Next.js, TypeScript, Tailwind                 | Student experience; renders lessons and visuals from JSON | Person 2, Person 3                       |
-| `services/api`       | FastAPI, Pydantic, PyMuPDF, Google Gen AI SDK, httpx | PDF ingestion, AI pipeline, validation, HTTP API   | Person 1                                 |
-| `packages/contracts` | JSON Schema                                   | The Lesson data contract both sides depend on             | Person 1 (changes reviewed by consumers) |
+| Part                 | Tech                                                 | Responsibility                                            | Owner                                    |
+| -------------------- | ---------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------- |
+| `apps/web`           | Next.js, TypeScript, Tailwind                        | Student experience; renders lessons and visuals from JSON | Person 2, Person 3                       |
+| `services/api`       | FastAPI, Pydantic, PyMuPDF, Google Gen AI SDK, httpx | PDF ingestion, AI pipeline, validation, HTTP API          | Person 1                                 |
+| `packages/contracts` | JSON Schema                                          | The Lesson data contract both sides depend on             | Person 1 (changes reviewed by consumers) |
 
 ```mermaid
 flowchart LR
@@ -57,17 +57,17 @@ flowchart LR
 
 ## Backend layout (`services/api/app`)
 
-| Module              | Role                                                                                                                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.py`           | App factory: settings, AI mode, store and service wiring, middleware, routers                                                                                                                     |
-| `core/`             | `config.py` (settings and limits), `logging.py`, `request_context.py` (request id), `middleware.py` (request logging, upload size limit), `errors.py` (error codes and envelope)                  |
-| `api/routes/`       | `health.py`; `lessons.py` (`POST /lessons/pdf`, `GET /lessons/{id}`)                                                                                                                              |
-| `schemas/`          | `lesson.py` (Pydantic mirror of the contract), `lessons_api.py` (`LessonRecord` response)                                                                                                         |
-| `models/content.py` | `ExtractedPage`, `ExtractedDocument`, `PagePassage`, `ContentChunk`                                                                                                                               |
-| `ingestion/`        | `pdf.py` (PyMuPDF extraction; the only PyMuPDF import), `text_cleaning.py`                                                                                                                        |
-| `services/`         | `uploads.py`, `chunking.py`, `pdf_lessons.py` (orchestration), `lesson_store.py`                                                                                                                  |
+| Module              | Role                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.py`           | App factory: settings, AI mode, store and service wiring, middleware, routers                                                                                                                                                                                                                                               |
+| `core/`             | `config.py` (settings and limits), `logging.py`, `request_context.py` (request id), `middleware.py` (request logging, upload size limit), `errors.py` (error codes and envelope)                                                                                                                                            |
+| `api/routes/`       | `health.py`; `lessons.py` (`POST /lessons/pdf`, `GET /lessons/{id}`)                                                                                                                                                                                                                                                        |
+| `schemas/`          | `lesson.py` (Pydantic mirror of the contract), `lessons_api.py` (`LessonRecord` response)                                                                                                                                                                                                                                   |
+| `models/content.py` | `ExtractedPage`, `ExtractedDocument`, `PagePassage`, `ContentChunk`                                                                                                                                                                                                                                                         |
+| `ingestion/`        | `pdf.py` (PyMuPDF extraction; the only PyMuPDF import), `text_cleaning.py`                                                                                                                                                                                                                                                  |
+| `services/`         | `uploads.py`, `chunking.py`, `pdf_lessons.py` (orchestration), `lesson_store.py`                                                                                                                                                                                                                                            |
 | `ai/`               | `provider.py`, `gemini_provider.py`, `openai_compatible.py`, `openrouter_provider.py`, `groq_provider.py`, `schema_tools.py`, `routing.py`, `lesson_cache.py`, `factory.py`, `lesson_generator.py`, `ai_lesson_generator.py`, `drafts.py`, `prompts/lesson_generation.py`, `lesson_assembly.py`, `mock_lesson_generator.py` |
-| `utils/`            | Safe id validation                                                                                                                                                                                |
+| `utils/`            | Safe id validation                                                                                                                                                                                                                                                                                                          |
 
 ## PDF lesson pipeline
 
@@ -124,12 +124,12 @@ then demo content:
 - **A fallback is never presented as the primary.** The result carries the provider that actually
   answered and one of four statuses, and a warning records what was skipped.
 
-| `generation_status` | `provider`                 | Meaning                                                  |
-| ------------------- | -------------------------- | -------------------------------------------------------- |
-| `live`              | `gemini`/`openrouter`/`groq` | The primary provider answered                          |
-| `fallback`          | `gemini`/`openrouter`/`groq` | A backup answered after the primary failed             |
-| `cached`            | `cache`                    | All providers failed; an earlier lesson for the same document was reused |
-| `demo`              | `demo`                     | All providers failed and there was no cached lesson; fixed example content |
+| `generation_status` | `provider`                   | Meaning                                                                    |
+| ------------------- | ---------------------------- | -------------------------------------------------------------------------- |
+| `live`              | `gemini`/`openrouter`/`groq` | The primary provider answered                                              |
+| `fallback`          | `gemini`/`openrouter`/`groq` | A backup answered after the primary failed                                 |
+| `cached`            | `cache`                      | All providers failed; an earlier lesson for the same document was reused   |
+| `demo`              | `demo`                       | All providers failed and there was no cached lesson; fixed example content |
 
 With `AI_FALLBACK_TO_DEMO=false` and no cached lesson, the request fails with
 `AI_PROVIDER_UNAVAILABLE` instead of silently serving demo content.
@@ -143,11 +143,11 @@ Pydantic model: `gemini_schema()` limits it to the keywords Gemini supports, and
 `openai_strict_schema()` additionally sets `additionalProperties: false` and marks every property
 required, as strict mode demands.
 
-| Provider   | Default model                            | Why                                                                                       |
-| ---------- | ---------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Gemini     | `gemini-3.8-flash`                       | Free tier, large context, native structured output; already the primary                   |
+| Provider   | Default model                            | Why                                                                                              |
+| ---------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Gemini     | `gemini-3.8-flash`                       | Free tier, large context, native structured output; already the primary                          |
 | OpenRouter | `nvidia/nemotron-3-super-120b-a12b:free` | A `:free` id needing no payment method, and one of the free models supporting structured outputs |
-| Groq       | `openai/gpt-oss-20b`                     | On Groq's documented list of models supporting `strict: true` JSON schema; very fast       |
+| Groq       | `openai/gpt-oss-20b`                     | On Groq's documented list of models supporting `strict: true` JSON schema; very fast             |
 
 Every model is configurable (`GEMINI_MODEL`, `OPENROUTER_MODEL`, `GROQ_MODEL`) and never hard-coded
 in business logic, because free-model availability changes often.
@@ -186,7 +186,7 @@ Checked against the official documentation and `google-genai` 2.23 in September 
 
   The knob used is `http_status_codes`, narrowed to a code the API never returns, which leaves
   nothing retryable. `attempts` cannot express this: it is normalised from `0` to `1` while the
-  client is built, and the Interactions API reads it as a retry *count*, so every value still allows
+  client is built, and the Interactions API reads it as a retry _count_, so every value still allows
   one retry. An empty `http_status_codes` list does not work either — the SDK treats it as falsy and
   restores its defaults. Transport-level errors are not retried either: the SDK converts them to
   `APIConnectionError` before its retry layer sees them, and that layer treats it as permanent.
@@ -209,11 +209,11 @@ Gemini uses a different API entirely and is untouched by this.
 Only `OpenRouterProvider` overrides it today, adding three fields after one real request spent 320
 seconds and returned HTTP 200 with an empty `content` field:
 
-| Field                             | Value                          | Why                                                                                  |
-| --------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| `max_tokens`                       | `8000`                         | Completion budget. A rich ten-section lesson with five quiz questions serialises to ~2,800 tokens compact, ~4,300 with whitespace, so this is roughly double the worst case |
-| `reasoning`                        | `{"effort": "none"}`           | The model is reasoning-capable and OpenRouter bills reasoning as output tokens; unbounded deliberation is what consumed the budget |
-| `provider`                         | `{"require_parameters": true}` | Route only to an upstream provider that honours `response_format`, instead of one that may ignore it |
+| Field        | Value                          | Why                                                                                                                                                                         |
+| ------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_tokens` | `8000`                         | Completion budget. A rich ten-section lesson with five quiz questions serialises to ~2,800 tokens compact, ~4,300 with whitespace, so this is roughly double the worst case |
+| `reasoning`  | `{"effort": "none"}`           | The model is reasoning-capable and OpenRouter bills reasoning as output tokens; unbounded deliberation is what consumed the budget                                          |
+| `provider`   | `{"require_parameters": true}` | Route only to an upstream provider that honours `response_format`, instead of one that may ignore it                                                                        |
 
 OpenRouter documents that a model whose reasoning is `mandatory` rejects `effort: "none"`, and the
 model page does not say whether this one is. A rejection arrives as an ordinary HTTP error, so it
@@ -225,7 +225,7 @@ fails over to Groq rather than hanging; the documented setting that works either
 Each provider caps a single HTTP attempt with its own `REQUEST_TIMEOUT_SECONDS`: 25s for Gemini,
 35s for OpenRouter, 45s for Groq (`app/ai/{gemini,openrouter,groq}_provider.py`). A timeout raises
 `AIProviderError` the same way any other provider failure does — no special-casing was needed, since
-both providers' error boundaries already convert *every* exception from a failed call, not just
+both providers' error boundaries already convert _every_ exception from a failed call, not just
 ones with a recognized status code (`gemini_provider.py`'s `except Exception`, and
 `openai_compatible.py`'s `except httpx.HTTPError`, which `httpx.TimeoutException` and
 `httpx.ConnectError` both are). `RoutingLessonGenerator` treats it like any other recoverable
@@ -240,7 +240,7 @@ of them fails that provider over immediately rather than blocking on the remaini
 **The deadline is enforced at the application level, not by the HTTP client.** Each provider runs
 its request inside `asyncio.timeout(REQUEST_TIMEOUT_SECONDS)`; the httpx/SDK timeout is passed
 through as well, but only as a lower-level safeguard. This is not belt-and-braces — the HTTP-client
-timeout alone is not a wall clock. It is a *per-operation* budget (connect, read, write, pool)
+timeout alone is not a wall clock. It is a _per-operation_ budget (connect, read, write, pool)
 whose read clock restarts every time another byte arrives, so a service that trickles bytes can
 hold a request open indefinitely without ever tripping it. That is exactly what happened in
 testing: one real OpenRouter call ran **320 seconds** against a 35-second httpx timeout and then
@@ -252,7 +252,7 @@ into `TimeoutError` on the way out. Unwinding runs `AsyncClient.__aexit__` (and 
 cleanup), so the connection pool closes and no socket or task is orphaned — `tests/` assert
 `asyncio.all_tasks()` is empty afterwards. The provider converts `TimeoutError` into the ordinary
 `AIProviderError`, so the router fails over exactly as it does for a 429 or an outage, and the API
-returns 503, never an unhandled 500. A cancellation from *outside* stays a `CancelledError` (a
+returns 503, never an unhandled 500. A cancellation from _outside_ stays a `CancelledError` (a
 `BaseException`), so it is caught by neither the `TimeoutError` clause nor Gemini's catch-all
 `except Exception`: shutdown is never mistaken for a provider failure.
 
@@ -445,22 +445,22 @@ type is logged, never the response body, which could contain the request or the 
 
 Every variable is optional. With none of them set the API runs in demo mode and costs nothing.
 
-| Variable                 | Default                                  | Purpose                                            |
-| ------------------------ | ---------------------------------------- | -------------------------------------------------- |
-| `AI_PROVIDER`            | `gemini`                                 | Provider tried first; `mock` never calls a service |
-| `AI_FALLBACK_PROVIDERS`  | `openrouter,groq`                        | Providers tried, in order, when the primary fails  |
-| `AI_CACHE_ENABLED`       | `true`                                   | Reuse an earlier lesson when all providers fail    |
-| `AI_FALLBACK_TO_DEMO`    | `true`                                   | Serve demo content as the last resort              |
-| `GEMINI_API_KEY`         | unset                                    | Free key from Google AI Studio                     |
-| `GEMINI_MODEL`           | `gemini-3.8-flash`                       | Gemini model                                       |
-| `OPENROUTER_API_KEY`     | unset                                    | Free key from openrouter.ai                        |
-| `OPENROUTER_MODEL`       | `nvidia/nemotron-3-super-120b-a12b:free` | OpenRouter model                                   |
-| `OPENROUTER_BASE_URL`    | `https://openrouter.ai/api/v1`           | API base URL                                       |
-| `OPENROUTER_APP_URL`     | unset                                    | Optional attribution header                        |
-| `OPENROUTER_APP_TITLE`   | unset                                    | Optional attribution header                        |
-| `GROQ_API_KEY`           | unset                                    | Free key from console.groq.com                     |
-| `GROQ_MODEL`             | `openai/gpt-oss-20b`                     | Groq model                                         |
-| `GROQ_BASE_URL`          | `https://api.groq.com/openai/v1`         | API base URL                                       |
+| Variable                | Default                                  | Purpose                                            |
+| ----------------------- | ---------------------------------------- | -------------------------------------------------- |
+| `AI_PROVIDER`           | `gemini`                                 | Provider tried first; `mock` never calls a service |
+| `AI_FALLBACK_PROVIDERS` | `openrouter,groq`                        | Providers tried, in order, when the primary fails  |
+| `AI_CACHE_ENABLED`      | `true`                                   | Reuse an earlier lesson when all providers fail    |
+| `AI_FALLBACK_TO_DEMO`   | `true`                                   | Serve demo content as the last resort              |
+| `GEMINI_API_KEY`        | unset                                    | Free key from Google AI Studio                     |
+| `GEMINI_MODEL`          | `gemini-3.8-flash`                       | Gemini model                                       |
+| `OPENROUTER_API_KEY`    | unset                                    | Free key from openrouter.ai                        |
+| `OPENROUTER_MODEL`      | `nvidia/nemotron-3-super-120b-a12b:free` | OpenRouter model                                   |
+| `OPENROUTER_BASE_URL`   | `https://openrouter.ai/api/v1`           | API base URL                                       |
+| `OPENROUTER_APP_URL`    | unset                                    | Optional attribution header                        |
+| `OPENROUTER_APP_TITLE`  | unset                                    | Optional attribution header                        |
+| `GROQ_API_KEY`          | unset                                    | Free key from console.groq.com                     |
+| `GROQ_MODEL`            | `openai/gpt-oss-20b`                     | Groq model                                         |
+| `GROQ_BASE_URL`         | `https://api.groq.com/openai/v1`         | API base URL                                       |
 
 A provider with no API key is skipped silently, so configuring one, two or three of them all work.
 Keys are held as Pydantic `SecretStr` and only unwrapped when a request is signed; they are never

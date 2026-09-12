@@ -158,9 +158,21 @@
         "summary": "Carbon dioxide enters the cycle, is fixed and reduced using ATP and NADPH, and glucose precursors leave the cycle while the original 5-carbon molecule is regenerated.",
         "nodes": [
           { "id": "d-co2", "label": "Carbon dioxide enters" },
-          { "id": "d-fix", "label": "Carbon fixation", "description": "CO2 attaches to a 5-carbon molecule" },
-          { "id": "d-reduce", "label": "Reduction", "description": "ATP and NADPH convert it to sugar precursors" },
-          { "id": "d-regenerate", "label": "Regeneration", "description": "The original 5-carbon molecule is rebuilt" }
+          {
+            "id": "d-fix",
+            "label": "Carbon fixation",
+            "description": "CO2 attaches to a 5-carbon molecule"
+          },
+          {
+            "id": "d-reduce",
+            "label": "Reduction",
+            "description": "ATP and NADPH convert it to sugar precursors"
+          },
+          {
+            "id": "d-regenerate",
+            "label": "Regeneration",
+            "description": "The original 5-carbon molecule is rebuilt"
+          }
         ],
         "edges": [
           { "from_id": "d-co2", "to_id": "d-fix" },

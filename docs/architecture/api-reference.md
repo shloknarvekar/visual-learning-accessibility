@@ -68,46 +68,58 @@ with `exclude_none`), not sent as `null`. Check for the key's presence, not its 
 
 ### `metadata` field reference
 
-| Field               | Always present? | Notes                                                                                     |
-| ------------------- | ---------------- | ------------------------------------------------------------------------------------------ |
-| `provider`           | yes              | Who produced the lesson: an AI provider name, `"cache"`, or `"demo"`. Never used for rendering — see [Contract stability](#contract-stability-what-you-can-rely-on). |
-| `generation_status`  | yes              | One of four states; see the [status matrix](#generation-status-and-degraded-states) below. |
-| `is_mock`            | yes              | `true` only when `provider` is `"demo"` — the lesson is fixed example content, not about the uploaded file. |
-| `notice`             | only for fallback/cached/demo | Plain-language, user-safe sentence explaining why this isn't a fresh, live result. Safe to show directly in the UI. |
-| `model`              | only when a live/fallback AI provider answered | Absent for `cache` and `demo`. |
-| `warnings`           | yes (may be `[]`) | Things that were removed or corrected before the lesson was accepted — e.g. an unverifiable quote, or scanned pages with no extractable text. Safe to show to users. |
-| `timings`            | yes              | Milliseconds per pipeline stage, useful for a loading-progress UI. |
-| `source_filename`, `page_count`, `chunk_count`, `character_count`, `ai_request_count`, `created_at` | yes | Informational; not needed to render the lesson. |
+| Field                                                                                               | Always present?                                | Notes                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider`                                                                                          | yes                                            | Who produced the lesson: an AI provider name, `"cache"`, or `"demo"`. Never used for rendering — see [Contract stability](#contract-stability-what-you-can-rely-on). |
+| `generation_status`                                                                                 | yes                                            | One of four states; see the [status matrix](#generation-status-and-degraded-states) below.                                                                           |
+| `is_mock`                                                                                           | yes                                            | `true` only when `provider` is `"demo"` — the lesson is fixed example content, not about the uploaded file.                                                          |
+| `notice`                                                                                            | only for fallback/cached/demo                  | Plain-language, user-safe sentence explaining why this isn't a fresh, live result. Safe to show directly in the UI.                                                  |
+| `model`                                                                                             | only when a live/fallback AI provider answered | Absent for `cache` and `demo`.                                                                                                                                       |
+| `warnings`                                                                                          | yes (may be `[]`)                              | Things that were removed or corrected before the lesson was accepted — e.g. an unverifiable quote, or scanned pages with no extractable text. Safe to show to users. |
+| `timings`                                                                                           | yes                                            | Milliseconds per pipeline stage, useful for a loading-progress UI.                                                                                                   |
+| `source_filename`, `page_count`, `chunk_count`, `character_count`, `ai_request_count`, `created_at` | yes                                            | Informational; not needed to render the lesson.                                                                                                                      |
 
 ## Generation status and degraded states
 
-| `generation_status` | `provider`                    | `is_mock` | `notice` | Meaning |
-| -------------------- | ------------------------------ | --------- | -------- | ------- |
-| `live`               | `gemini` / `openrouter` / `groq` | `false`   | absent   | The primary configured provider answered. |
-| `fallback`           | `gemini` / `openrouter` / `groq` | `false`   | present  | The primary provider failed; a backup provider answered instead. |
-| `cached`             | `cache`                         | `false`   | present  | Every provider failed; an earlier lesson for the same document text was reused. |
-| `demo`               | `demo`                          | `true`    | present  | Every provider failed and nothing was cached; fixed example content is returned so the UI never breaks. |
+| `generation_status` | `provider`                       | `is_mock` | `notice` | Meaning                                                                                                 |
+| ------------------- | -------------------------------- | --------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `live`              | `gemini` / `openrouter` / `groq` | `false`   | absent   | The primary configured provider answered.                                                               |
+| `fallback`          | `gemini` / `openrouter` / `groq` | `false`   | present  | The primary provider failed; a backup provider answered instead.                                        |
+| `cached`            | `cache`                          | `false`   | present  | Every provider failed; an earlier lesson for the same document text was reused.                         |
+| `demo`              | `demo`                           | `true`    | present  | Every provider failed and nothing was cached; fixed example content is returned so the UI never breaks. |
 
 Example `metadata` for each (fields other than the ones below are the same shape as the full
 example further down):
 
 ```json
 // fallback
-{ "provider": "openrouter", "generation_status": "fallback", "is_mock": false,
+{
+  "provider": "openrouter",
+  "generation_status": "fallback",
+  "is_mock": false,
   "notice": "The main AI provider was unavailable, so this lesson was generated by openrouter.",
-  "warnings": ["gemini was unavailable: rate limit exceeded"] }
+  "warnings": ["gemini was unavailable: rate limit exceeded"]
+}
 ```
 
 ```json
 // cached
-{ "provider": "cache", "generation_status": "cached", "is_mock": false,
-  "notice": "No AI provider was available. This lesson comes from an earlier successful generation of the same document." }
+{
+  "provider": "cache",
+  "generation_status": "cached",
+  "is_mock": false,
+  "notice": "No AI provider was available. This lesson comes from an earlier successful generation of the same document."
+}
 ```
 
 ```json
 // demo
-{ "provider": "demo", "generation_status": "demo", "is_mock": true,
-  "notice": "Demo mode: AI generation is off or has no API key, so this lesson is fixed example data. It does not describe the uploaded PDF." }
+{
+  "provider": "demo",
+  "generation_status": "demo",
+  "is_mock": true,
+  "notice": "Demo mode: AI generation is off or has no API key, so this lesson is fixed example data. It does not describe the uploaded PDF."
+}
 ```
 
 If you only render one thing to distinguish "this is real" from "this is a fallback": show
@@ -123,28 +135,34 @@ AI_PROVIDER_UNAVAILABLE` instead of demo content — see the error catalog.
 Every error response has the same envelope:
 
 ```json
-{ "error": { "code": "PDF_HAS_NO_EXTRACTABLE_TEXT", "message": "This PDF does not contain extractable text. OCR support is planned.", "details": null } }
+{
+  "error": {
+    "code": "PDF_HAS_NO_EXTRACTABLE_TEXT",
+    "message": "This PDF does not contain extractable text. OCR support is planned.",
+    "details": null
+  }
+}
 ```
 
 `code` is stable and meant to be switched on; `message` is plain language, safe to show to users,
 and may change wording over time; `details` is present only for `VALIDATION_ERROR` (a list of
 per-field problems) and otherwise omitted.
 
-| `code`                          | HTTP  | When                                                                 |
-| -------------------------------- | ----- | ---------------------------------------------------------------------- |
-| `INVALID_FILE_TYPE`              | 415   | Upload is not a PDF — wrong declared content type, or the bytes don't start with `%PDF-`. |
-| `FILE_TOO_LARGE`                 | 413   | Upload exceeds `MAX_UPLOAD_MB`.                                        |
-| `PDF_EXTRACTION_FAILED`          | 422   | The PDF is damaged, password-protected, or has zero pages.             |
-| `PDF_HAS_NO_EXTRACTABLE_TEXT`    | 422   | Scanned/image-only PDF — no OCR yet.                                    |
-| `PDF_TOO_MANY_PAGES`             | 422   | Over `PDF_MAX_PAGES`.                                                   |
-| `DOCUMENT_TOO_LONG`              | 422   | The document would need more AI requests than `AI_MAX_CHUNKS` allows.  |
-| `AI_RATE_LIMITED`                | 429   | Every configured provider is currently rate-limited.                    |
-| `AI_INVALID_RESPONSE`            | 502   | A provider's output didn't match the required schema.                  |
-| `LESSON_VALIDATION_FAILED`       | 502   | No valid lesson could be assembled from the AI output.                  |
-| `AI_PROVIDER_UNAVAILABLE`        | 503   | **Covers both an unreachable/failing provider and a request timeout** (each provider has its own hard wall-clock deadline; a hang is treated exactly like an outage — never a hung HTTP request on the client). |
-| `LESSON_NOT_FOUND`               | 404   | Unknown or malformed `lesson_id`.                                       |
-| `VALIDATION_ERROR`               | 422   | Malformed request — e.g. no `file` field in the multipart body.        |
-| `HTTP_ERROR` / `INTERNAL_ERROR`  | varies / 500 | Fallback envelopes for routing errors and truly unexpected failures; stack traces are never included. |
+| `code`                          | HTTP         | When                                                                                                                                                                                                            |
+| ------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_FILE_TYPE`             | 415          | Upload is not a PDF — wrong declared content type, or the bytes don't start with `%PDF-`.                                                                                                                       |
+| `FILE_TOO_LARGE`                | 413          | Upload exceeds `MAX_UPLOAD_MB`.                                                                                                                                                                                 |
+| `PDF_EXTRACTION_FAILED`         | 422          | The PDF is damaged, password-protected, or has zero pages.                                                                                                                                                      |
+| `PDF_HAS_NO_EXTRACTABLE_TEXT`   | 422          | Scanned/image-only PDF — no OCR yet.                                                                                                                                                                            |
+| `PDF_TOO_MANY_PAGES`            | 422          | Over `PDF_MAX_PAGES`.                                                                                                                                                                                           |
+| `DOCUMENT_TOO_LONG`             | 422          | The document would need more AI requests than `AI_MAX_CHUNKS` allows.                                                                                                                                           |
+| `AI_RATE_LIMITED`               | 429          | Every configured provider is currently rate-limited.                                                                                                                                                            |
+| `AI_INVALID_RESPONSE`           | 502          | A provider's output didn't match the required schema.                                                                                                                                                           |
+| `LESSON_VALIDATION_FAILED`      | 502          | No valid lesson could be assembled from the AI output.                                                                                                                                                          |
+| `AI_PROVIDER_UNAVAILABLE`       | 503          | **Covers both an unreachable/failing provider and a request timeout** (each provider has its own hard wall-clock deadline; a hang is treated exactly like an outage — never a hung HTTP request on the client). |
+| `LESSON_NOT_FOUND`              | 404          | Unknown or malformed `lesson_id`.                                                                                                                                                                               |
+| `VALIDATION_ERROR`              | 422          | Malformed request — e.g. no `file` field in the multipart body.                                                                                                                                                 |
+| `HTTP_ERROR` / `INTERNAL_ERROR` | varies / 500 | Fallback envelopes for routing errors and truly unexpected failures; stack traces are never included.                                                                                                           |
 
 "Invalid PDF" and "timeout" are not distinct codes — they map onto the rows above
 (`INVALID_FILE_TYPE`/`PDF_EXTRACTION_FAILED`/`PDF_HAS_NO_EXTRACTABLE_TEXT` for a bad PDF,
@@ -179,17 +197,17 @@ example only demonstrates 6 of the 9 (`concept`, `explanation`, `process`, `comp
 adds the missing three (`timeline`, `diagram`, `chart`) plus repeats the other six, so all 9 are in
 one place. It is schema-validated by `npm run contracts:validate` like every other example.
 
-| `type`        | Renderer needs (`content` shape)                                                    | Owner    |
-| -------------- | ------------------------------------------------------------------------------------- | -------- |
-| `concept`      | `term`, `definition`, `key_points[]`                                                  | Person 2 |
-| `explanation`  | `body`, `key_points[]`                                                                | Person 2 |
-| `process`      | `steps[]` of `{id, title, description}`, ordered                                      | Person 2 |
-| `comparison`   | `items[]`, `rows[]` of `{criterion, values[]}` (one value per item, same order)        | Person 2 |
-| `timeline`     | `events[]` of `{id, time_label, title, description}`, ordered                          | Person 2 |
-| `example`      | `scenario`, `explanation`                                                             | Person 2 |
-| `concept_map`  | `summary`, `nodes[]` of `{id, label, description?}`, `edges[]` of `{from_id, to_id, label?}` | Person 3 |
-| `diagram`      | as `concept_map`, plus `diagram_type`: `"flowchart" \| "cycle" \| "hierarchy"`          | Person 3 |
-| `chart`        | `chart_type`: `"bar" \| "line" \| "pie"`, `summary`, optional axis labels/`unit`, `series[]` of `{name, points[] of {label, value}}` | Person 3 |
+| `type`        | Renderer needs (`content` shape)                                                                                                     | Owner    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `concept`     | `term`, `definition`, `key_points[]`                                                                                                 | Person 2 |
+| `explanation` | `body`, `key_points[]`                                                                                                               | Person 2 |
+| `process`     | `steps[]` of `{id, title, description}`, ordered                                                                                     | Person 2 |
+| `comparison`  | `items[]`, `rows[]` of `{criterion, values[]}` (one value per item, same order)                                                      | Person 2 |
+| `timeline`    | `events[]` of `{id, time_label, title, description}`, ordered                                                                        | Person 2 |
+| `example`     | `scenario`, `explanation`                                                                                                            | Person 2 |
+| `concept_map` | `summary`, `nodes[]` of `{id, label, description?}`, `edges[]` of `{from_id, to_id, label?}`                                         | Person 3 |
+| `diagram`     | as `concept_map`, plus `diagram_type`: `"flowchart" \| "cycle" \| "hierarchy"`                                                       | Person 3 |
+| `chart`       | `chart_type`: `"bar" \| "line" \| "pie"`, `summary`, optional axis labels/`unit`, `series[]` of `{name, points[] of {label, value}}` | Person 3 |
 
 Below: the three previously-missing types, taken verbatim from `all-section-types.lesson.json`.
 
@@ -201,14 +219,25 @@ Below: the three previously-missing types, taken verbatim from `all-section-type
   "type": "timeline",
   "title": "How photosynthesis was understood",
   "source_references": [
-    { "page_number": 3, "excerpt": "In 1930 Cornelis van Niel proposed the modern equation for photosynthesis." }
+    {
+      "page_number": 3,
+      "excerpt": "In 1930 Cornelis van Niel proposed the modern equation for photosynthesis."
+    }
   ],
   "content": {
     "events": [
-      { "id": "event-1930-equation", "time_label": "1930", "title": "Modern equation proposed",
-        "description": "Cornelis van Niel proposed the modern equation for photosynthesis, based on studies of bacteria." },
-      { "id": "event-1950-reactions-confirmed", "time_label": "1950", "title": "Two-stage process confirmed",
-        "description": "Researchers confirmed the separate light-dependent and light-independent (Calvin cycle) stages." }
+      {
+        "id": "event-1930-equation",
+        "time_label": "1930",
+        "title": "Modern equation proposed",
+        "description": "Cornelis van Niel proposed the modern equation for photosynthesis, based on studies of bacteria."
+      },
+      {
+        "id": "event-1950-reactions-confirmed",
+        "time_label": "1950",
+        "title": "Two-stage process confirmed",
+        "description": "Researchers confirmed the separate light-dependent and light-independent (Calvin cycle) stages."
+      }
     ]
   }
 }
@@ -222,16 +251,31 @@ Below: the three previously-missing types, taken verbatim from `all-section-type
   "type": "diagram",
   "title": "The Calvin cycle as a loop",
   "source_references": [
-    { "page_number": 3, "excerpt": "The Calvin cycle turns carbon dioxide into glucose in a series of steps." }
+    {
+      "page_number": 3,
+      "excerpt": "The Calvin cycle turns carbon dioxide into glucose in a series of steps."
+    }
   ],
   "content": {
     "diagram_type": "cycle",
     "summary": "Carbon dioxide enters the cycle, is fixed and reduced using ATP and NADPH, and glucose precursors leave the cycle while the original 5-carbon molecule is regenerated.",
     "nodes": [
       { "id": "d-co2", "label": "Carbon dioxide enters" },
-      { "id": "d-fix", "label": "Carbon fixation", "description": "CO2 attaches to a 5-carbon molecule" },
-      { "id": "d-reduce", "label": "Reduction", "description": "ATP and NADPH convert it to sugar precursors" },
-      { "id": "d-regenerate", "label": "Regeneration", "description": "The original 5-carbon molecule is rebuilt" }
+      {
+        "id": "d-fix",
+        "label": "Carbon fixation",
+        "description": "CO2 attaches to a 5-carbon molecule"
+      },
+      {
+        "id": "d-reduce",
+        "label": "Reduction",
+        "description": "ATP and NADPH convert it to sugar precursors"
+      },
+      {
+        "id": "d-regenerate",
+        "label": "Regeneration",
+        "description": "The original 5-carbon molecule is rebuilt"
+      }
     ],
     "edges": [
       { "from_id": "d-co2", "to_id": "d-fix" },
@@ -251,7 +295,10 @@ Below: the three previously-missing types, taken verbatim from `all-section-type
   "type": "chart",
   "title": "Bubbles per minute vs. distance from the lamp",
   "source_references": [
-    { "page_number": 3, "excerpt": "12 bubbles formed per minute at 10 cm and 30 bubbles formed per minute at 5 cm from the lamp." }
+    {
+      "page_number": 3,
+      "excerpt": "12 bubbles formed per minute at 10 cm and 30 bubbles formed per minute at 5 cm from the lamp."
+    }
   ],
   "content": {
     "chart_type": "bar",
@@ -260,7 +307,13 @@ Below: the three previously-missing types, taken verbatim from `all-section-type
     "y_axis_label": "Bubbles per minute",
     "unit": "bubbles/min",
     "series": [
-      { "name": "Pondweed", "points": [ { "label": "10 cm", "value": 12 }, { "label": "5 cm", "value": 30 } ] }
+      {
+        "name": "Pondweed",
+        "points": [
+          { "label": "10 cm", "value": 12 },
+          { "label": "5 cm", "value": 30 }
+        ]
+      }
     ]
   }
 }
@@ -313,12 +366,18 @@ has all 9, plus the full quiz with `source_references`):
         "type": "concept",
         "title": "What is photosynthesis?",
         "source_references": [
-          { "page_number": 1, "excerpt": "Photosynthesis converts light energy into chemical energy stored in glucose." }
+          {
+            "page_number": 1,
+            "excerpt": "Photosynthesis converts light energy into chemical energy stored in glucose."
+          }
         ],
         "content": {
           "term": "Photosynthesis",
           "definition": "The process in which plants, algae and some bacteria use light energy to make glucose from carbon dioxide and water. Oxygen is released.",
-          "key_points": ["Inputs: carbon dioxide, water and light energy.", "Outputs: glucose and oxygen."]
+          "key_points": [
+            "Inputs: carbon dioxide, water and light energy.",
+            "Outputs: glucose and oxygen."
+          ]
         }
       },
       {
@@ -326,7 +385,10 @@ has all 9, plus the full quiz with `source_references`):
         "type": "chart",
         "title": "Bubbles per minute vs. distance from the lamp",
         "source_references": [
-          { "page_number": 3, "excerpt": "12 bubbles formed per minute at 10 cm and 30 bubbles formed per minute at 5 cm from the lamp." }
+          {
+            "page_number": 3,
+            "excerpt": "12 bubbles formed per minute at 10 cm and 30 bubbles formed per minute at 5 cm from the lamp."
+          }
         ],
         "content": {
           "chart_type": "bar",
@@ -334,7 +396,15 @@ has all 9, plus the full quiz with `source_references`):
           "x_axis_label": "Distance from lamp",
           "y_axis_label": "Bubbles per minute",
           "unit": "bubbles/min",
-          "series": [{ "name": "Pondweed", "points": [{ "label": "10 cm", "value": 12 }, { "label": "5 cm", "value": 30 }] }]
+          "series": [
+            {
+              "name": "Pondweed",
+              "points": [
+                { "label": "10 cm", "value": 12 },
+                { "label": "5 cm", "value": 30 }
+              ]
+            }
+          ]
         }
       }
     ],
@@ -394,9 +464,9 @@ behaviour (verified by `services/api/tests/test_health.py::test_cors_allows_conf
 
 ## Health and readiness
 
-| Endpoint            | Purpose                                                                |
-| -------------------- | ------------------------------------------------------------------------ |
-| `GET /health`        | Unversioned; for deploy platforms and uptime checks that expect a fixed path. |
+| Endpoint             | Purpose                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `GET /health`        | Unversioned; for deploy platforms and uptime checks that expect a fixed path.    |
 | `GET /api/v1/health` | Same response, under the versioned API prefix — use this one from frontend code. |
 
 ```json
