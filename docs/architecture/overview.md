@@ -342,6 +342,10 @@ on drift. The PDF pipeline did not require any contract change.
 
 ## Lessons API
 
+> For a consumer-focused reference (full endpoint docs, one example of every section type
+> including `timeline`/`diagram`/`chart`, a complete `LessonRecord` example, the error catalog and
+> CORS/health notes) see [`api-reference.md`](api-reference.md).
+
 ### `POST /api/v1/lessons/pdf`
 
 `multipart/form-data` with a `file` field. Returns `201` with a `LessonRecord`:

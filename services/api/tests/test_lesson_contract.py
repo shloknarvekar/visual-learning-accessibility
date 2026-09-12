@@ -1,18 +1,45 @@
 """The Pydantic models and packages/contracts/lesson.schema.json must describe the same contract."""
 
+import json
 from typing import Any, get_args
 
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 from pydantic import ValidationError
 
+from app.core.config import CONTRACTS_DIR
 from app.schemas import lesson as lesson_models
 from app.schemas.lesson import Lesson, Section
+
+ALL_SECTION_TYPES = frozenset(
+    {
+        "concept",
+        "explanation",
+        "process",
+        "comparison",
+        "timeline",
+        "example",
+        "concept_map",
+        "diagram",
+        "chart",
+    }
+)
 
 
 @pytest.fixture(scope="module")
 def validator(lesson_schema: dict[str, Any]) -> Draft202012Validator:
     return Draft202012Validator(lesson_schema, format_checker=FormatChecker())
+
+
+@pytest.fixture
+def all_section_types_lesson_data() -> dict[str, Any]:
+    # Documentation fixture for Person 2/3 (docs/architecture/api-reference.md): the only example
+    # covering all 9 section types, including the 3 (timeline, diagram, chart)
+    # photosynthesis.lesson.json does not. `npm run contracts:validate` checks it against the JSON
+    # Schema; these tests are the equivalent backend-side check against the Pydantic mirror, which
+    # enforces invariants JSON Schema cannot (unique ids, resolvable edges and quiz references).
+    path = CONTRACTS_DIR / "examples" / "all-section-types.lesson.json"
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _schema_errors(validator: Draft202012Validator, instance: Any) -> list[str]:
@@ -94,3 +121,27 @@ def test_rejects_comparison_row_with_wrong_width(example_lesson_data: dict[str, 
 
     with pytest.raises(ValidationError, match="values for 2 items"):
         Lesson.model_validate(example_lesson_data)
+
+
+# ---- all-section-types.lesson.json: the doc fixture covering the 3 types the example above (and
+# its mock/demo-mode content) doesn't -- timeline, diagram and chart. -----------------------------
+
+
+def test_all_section_types_example_matches_json_schema(
+    validator: Draft202012Validator, all_section_types_lesson_data: dict[str, Any]
+) -> None:
+    assert _schema_errors(validator, all_section_types_lesson_data) == []
+
+
+def test_all_section_types_example_matches_pydantic_model(
+    all_section_types_lesson_data: dict[str, Any],
+) -> None:
+    Lesson.model_validate(all_section_types_lesson_data)
+
+
+def test_all_section_types_example_covers_every_section_type(
+    all_section_types_lesson_data: dict[str, Any],
+) -> None:
+    section_types = {section["type"] for section in all_section_types_lesson_data["sections"]}
+
+    assert section_types == ALL_SECTION_TYPES

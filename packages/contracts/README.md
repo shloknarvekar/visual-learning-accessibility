@@ -5,7 +5,8 @@ The shared, technology-neutral contract between the API and the web app.
 | File                      | Purpose                                                        |
 | ------------------------- | -------------------------------------------------------------- |
 | `lesson.schema.json`      | **Source of truth** for the Lesson JSON (JSON Schema 2020-12). |
-| `examples/*.lesson.json`  | Hand-written lessons for building UI without the API.          |
+| `examples/photosynthesis.lesson.json` | Hand-written lesson for building UI without the API. Demonstrates 6 of the 9 section types (`concept`, `explanation`, `process`, `comparison`, `concept_map`, `example`); this is also the fixed lesson served in mock/demo mode. |
+| `examples/all-section-types.lesson.json` | Reference fixture covering all 9 section types, including the 3 the file above doesn't (`timeline`, `diagram`, `chart`). Not used by the app at runtime — for backend/frontend integration reference only. See [`docs/architecture/api-reference.md`](../../docs/architecture/api-reference.md). |
 | `src/generated/lesson.ts` | TypeScript types generated from the schema. Do not edit.       |
 | `src/index.ts`            | Package entry: re-exports the types and the example lesson.    |
 

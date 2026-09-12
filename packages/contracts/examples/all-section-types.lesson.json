@@ -1,0 +1,245 @@
+{
+  "schema_version": "0.1.0",
+  "id": "example-all-section-types",
+  "title": "Photosynthesis: A Complete Section-Type Reference",
+  "overview": "A reference lesson that exercises every section type in the Lesson contract, including timeline, diagram and chart, which the hand-written photosynthesis.lesson.json example does not cover. Built for backend/frontend integration work, not for display to students.",
+  "source": {
+    "source_type": "pdf",
+    "title": "Biology Notes, Chapter 8: Photosynthesis",
+    "filename": "biology-notes-chapter-8.pdf"
+  },
+  "sections": [
+    {
+      "id": "sec-definition",
+      "type": "concept",
+      "title": "What is photosynthesis?",
+      "source_references": [
+        {
+          "page_number": 1,
+          "excerpt": "Photosynthesis converts light energy into chemical energy stored in glucose."
+        }
+      ],
+      "content": {
+        "term": "Photosynthesis",
+        "definition": "The process in which plants, algae and some bacteria use light energy to make glucose from carbon dioxide and water. Oxygen is released.",
+        "key_points": [
+          "Inputs: carbon dioxide, water and light energy.",
+          "Outputs: glucose and oxygen."
+        ]
+      }
+    },
+    {
+      "id": "sec-chloroplast",
+      "type": "explanation",
+      "title": "Where photosynthesis happens",
+      "source_references": [{ "page_number": 2 }],
+      "content": {
+        "body": "Photosynthesis happens inside chloroplasts, which contain chlorophyll, a green pigment that absorbs red and blue light and reflects green light.",
+        "key_points": [
+          "Chloroplasts are where photosynthesis happens.",
+          "Leaves look green because chlorophyll reflects green light."
+        ]
+      }
+    },
+    {
+      "id": "sec-calvin-cycle",
+      "type": "process",
+      "title": "The Calvin cycle",
+      "source_references": [
+        {
+          "page_number": 3,
+          "excerpt": "The Calvin cycle turns carbon dioxide into glucose in a series of steps."
+        }
+      ],
+      "content": {
+        "steps": [
+          {
+            "id": "step-fix-carbon",
+            "title": "Fix carbon",
+            "description": "Carbon dioxide from the air is attached to an existing 5-carbon molecule."
+          },
+          {
+            "id": "step-reduce",
+            "title": "Reduce",
+            "description": "ATP and NADPH from the light-dependent reactions convert the fixed carbon into sugar precursors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "sec-compare-stages",
+      "type": "comparison",
+      "title": "Light-dependent reactions and the Calvin cycle",
+      "source_references": [
+        { "page_number": 3, "excerpt": "confirmed the light and dark reactions" }
+      ],
+      "content": {
+        "items": ["Light-dependent reactions", "Calvin cycle"],
+        "rows": [
+          { "criterion": "Needs light directly", "values": ["Yes", "No"] },
+          {
+            "criterion": "Main outputs",
+            "values": ["Oxygen, ATP and NADPH", "Sugar (G3P)"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sec-timeline",
+      "type": "timeline",
+      "title": "How photosynthesis was understood",
+      "source_references": [
+        {
+          "page_number": 3,
+          "excerpt": "In 1930 Cornelis van Niel proposed the modern equation for photosynthesis."
+        }
+      ],
+      "content": {
+        "events": [
+          {
+            "id": "event-1930-equation",
+            "time_label": "1930",
+            "title": "Modern equation proposed",
+            "description": "Cornelis van Niel proposed the modern equation for photosynthesis, based on studies of bacteria."
+          },
+          {
+            "id": "event-1950-reactions-confirmed",
+            "time_label": "1950",
+            "title": "Two-stage process confirmed",
+            "description": "Researchers confirmed the separate light-dependent and light-independent (Calvin cycle) stages."
+          }
+        ]
+      }
+    },
+    {
+      "id": "sec-example-pondweed",
+      "type": "example",
+      "title": "Example: pondweed under a lamp",
+      "source_references": [{ "page_number": 5 }],
+      "content": {
+        "scenario": "A piece of pondweed is placed in water under a lamp. Small bubbles form on its leaves; moving the lamp closer produces more bubbles per minute.",
+        "explanation": "The bubbles are mostly oxygen released by photosynthesis. Moving the lamp closer increases light intensity, so photosynthesis happens faster, until another factor becomes the limit."
+      }
+    },
+    {
+      "id": "sec-concept-map",
+      "type": "concept_map",
+      "title": "How the parts connect",
+      "source_references": [{ "page_number": 3 }],
+      "content": {
+        "summary": "Light powers the light-dependent reactions, which produce ATP and NADPH. The Calvin cycle uses them, plus carbon dioxide, to produce glucose.",
+        "nodes": [
+          { "id": "light-reactions", "label": "Light-dependent reactions" },
+          { "id": "atp-nadph", "label": "ATP and NADPH" },
+          { "id": "carbon-dioxide", "label": "Carbon dioxide" },
+          { "id": "calvin-cycle", "label": "Calvin cycle" },
+          { "id": "glucose", "label": "Glucose" }
+        ],
+        "edges": [
+          { "from_id": "light-reactions", "to_id": "atp-nadph", "label": "produces" },
+          { "from_id": "atp-nadph", "to_id": "calvin-cycle", "label": "power" },
+          { "from_id": "carbon-dioxide", "to_id": "calvin-cycle", "label": "is used by" },
+          { "from_id": "calvin-cycle", "to_id": "glucose", "label": "produces" }
+        ]
+      }
+    },
+    {
+      "id": "sec-diagram-cycle",
+      "type": "diagram",
+      "title": "The Calvin cycle as a loop",
+      "source_references": [
+        {
+          "page_number": 3,
+          "excerpt": "The Calvin cycle turns carbon dioxide into glucose in a series of steps."
+        }
+      ],
+      "content": {
+        "diagram_type": "cycle",
+        "summary": "Carbon dioxide enters the cycle, is fixed and reduced using ATP and NADPH, and glucose precursors leave the cycle while the original 5-carbon molecule is regenerated.",
+        "nodes": [
+          { "id": "d-co2", "label": "Carbon dioxide enters" },
+          { "id": "d-fix", "label": "Carbon fixation", "description": "CO2 attaches to a 5-carbon molecule" },
+          { "id": "d-reduce", "label": "Reduction", "description": "ATP and NADPH convert it to sugar precursors" },
+          { "id": "d-regenerate", "label": "Regeneration", "description": "The original 5-carbon molecule is rebuilt" }
+        ],
+        "edges": [
+          { "from_id": "d-co2", "to_id": "d-fix" },
+          { "from_id": "d-fix", "to_id": "d-reduce" },
+          { "from_id": "d-reduce", "to_id": "d-regenerate", "label": "some product" },
+          { "from_id": "d-regenerate", "to_id": "d-fix", "label": "regenerated molecule" }
+        ]
+      }
+    },
+    {
+      "id": "sec-chart-bubbles",
+      "type": "chart",
+      "title": "Bubbles per minute vs. distance from the lamp",
+      "source_references": [
+        {
+          "page_number": 3,
+          "excerpt": "12 bubbles formed per minute at 10 cm and 30 bubbles formed per minute at 5 cm from the lamp."
+        }
+      ],
+      "content": {
+        "chart_type": "bar",
+        "summary": "Moving the lamp closer to the pondweed increased the rate of bubble formation, showing that light intensity was limiting the rate of photosynthesis at the greater distance.",
+        "x_axis_label": "Distance from lamp",
+        "y_axis_label": "Bubbles per minute",
+        "unit": "bubbles/min",
+        "series": [
+          {
+            "name": "Pondweed",
+            "points": [
+              { "label": "10 cm", "value": 12 },
+              { "label": "5 cm", "value": 30 }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "id": "q-oxygen",
+      "type": "multiple_choice",
+      "prompt": "Which gas do plants release during photosynthesis?",
+      "options": [
+        { "id": "a", "text": "Carbon dioxide" },
+        { "id": "b", "text": "Oxygen" },
+        { "id": "c", "text": "Nitrogen" }
+      ],
+      "correct_option_id": "b",
+      "explanation": "Water is split during the light-dependent reactions. Oxygen is released as a by-product.",
+      "section_ids": ["sec-definition", "sec-calvin-cycle"]
+    },
+    {
+      "id": "q-timeline-equation",
+      "type": "multiple_choice",
+      "prompt": "Who proposed the modern equation for photosynthesis, and when?",
+      "options": [
+        { "id": "a", "text": "Cornelis van Niel, 1930" },
+        { "id": "b", "text": "Charles Darwin, 1859" },
+        { "id": "c", "text": "Rosalind Franklin, 1950" }
+      ],
+      "correct_option_id": "a",
+      "explanation": "Cornelis van Niel proposed the modern equation in 1930, based on studies of photosynthetic bacteria.",
+      "section_ids": ["sec-timeline"],
+      "source_references": [
+        { "page_number": 3, "excerpt": "In 1930 Cornelis van Niel proposed the modern equation" }
+      ]
+    },
+    {
+      "id": "q-bubble-rate",
+      "type": "multiple_choice",
+      "prompt": "In the pondweed experiment, what happened to the bubble rate when the lamp moved from 10 cm to 5 cm?",
+      "options": [
+        { "id": "a", "text": "It decreased" },
+        { "id": "b", "text": "It stayed the same" },
+        { "id": "c", "text": "It increased" }
+      ],
+      "correct_option_id": "c",
+      "explanation": "The rate rose from 12 to 30 bubbles per minute as light intensity increased.",
+      "section_ids": ["sec-chart-bubbles", "sec-example-pondweed"]
+    }
+  ]
+}
