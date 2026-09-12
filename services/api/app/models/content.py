@@ -1,44 +1,55 @@
-"""Data flowing through the early pipeline stages: raw inputs, extracted text, and segments.
+"""Data passed between pipeline stages. Internal: not part of the public API contract."""
 
-Every piece of text keeps a `SourceReference` so generated lesson sections can cite where they came
-from (page number for PDFs, time range for videos).
-"""
+from pydantic import BaseModel, Field, computed_field
 
-from pathlib import Path
-
-from pydantic import BaseModel, Field, HttpUrl
-
-from app.schemas.lesson import Id, Source, SourceReference
+from app.schemas.lesson import Id
 
 
-class YouTubeInput(BaseModel):
-    url: HttpUrl
-
-
-class PdfInput(BaseModel):
-    file_path: Path = Field(
-        description="Server-side path of a stored upload; never client-supplied."
-    )
-    display_name: str = Field(description="Sanitised original filename, for display only.")
-
-
-SourceInput = YouTubeInput | PdfInput
-
-
-class ContentBlock(BaseModel):
-    """A run of extracted text and where it sits in the source."""
-
+class ExtractedPage(BaseModel):
+    page_number: int = Field(ge=1)
     text: str
-    location: SourceReference
 
 
 class ExtractedDocument(BaseModel):
-    source: Source
-    blocks: list[ContentBlock]
+    """Cleaned text, page by page. Pages without text are kept so page numbers stay exact."""
+
+    pages: list[ExtractedPage]
+    total_pages: int = Field(ge=1)
+
+    @computed_field
+    @property
+    def character_count(self) -> int:
+        return sum(len(page.text) for page in self.pages)
+
+    @property
+    def empty_page_numbers(self) -> list[int]:
+        return [page.page_number for page in self.pages if not page.text.strip()]
 
 
-class ContentSegment(BaseModel):
-    """A topically coherent group of blocks: the unit the AI analysis stage reads."""
+class PagePassage(BaseModel):
+    """Consecutive text from a single page inside a chunk."""
 
-    id: Id
-    blocks: list[ContentBlock] = Field(min_length=1)
+    page_number: int = Field(ge=1)
+    text: str = Field(min_length=1)
+
+
+class ContentChunk(BaseModel):
+    """A slice of the document small enough for one model request, keeping page boundaries."""
+
+    chunk_id: Id
+    passages: list[PagePassage] = Field(min_length=1)
+
+    @computed_field
+    @property
+    def page_start(self) -> int:
+        return self.passages[0].page_number
+
+    @computed_field
+    @property
+    def page_end(self) -> int:
+        return self.passages[-1].page_number
+
+    @computed_field
+    @property
+    def text(self) -> str:
+        return "\n\n".join(passage.text for passage in self.passages)

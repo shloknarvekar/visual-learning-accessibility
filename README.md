@@ -62,6 +62,8 @@ a billing account, a payment method or credits.
 | [Google Gemini API](https://ai.google.dev/gemini-api/docs/pricing) free tier                                                   | Free                                       | **No, optional** |
 | GitHub repository and GitHub Actions CI                                                                                        | Free for public repositories               | Optional         |
 
+PDF text extraction uses PyMuPDF, which is free and open source under the AGPL-3.0 licence.
+
 No image-generation APIs are used. The AI returns structured data (nodes, edges, data series) and
 the frontend draws every visual with code.
 

@@ -8,7 +8,7 @@ def test_unknown_route_uses_error_envelope(client: TestClient) -> None:
     response = client.get("/does-not-exist")
 
     assert response.status_code == 404
-    assert response.json()["error"]["code"] == "http_error"
+    assert response.json()["error"]["code"] == "HTTP_ERROR"
 
 
 def test_unexpected_error_hides_internal_details(settings: Settings) -> None:
@@ -23,6 +23,6 @@ def test_unexpected_error_hides_internal_details(settings: Settings) -> None:
 
     assert response.status_code == 500
     assert response.json() == {
-        "error": {"code": "internal_error", "message": "An unexpected error occurred."}
+        "error": {"code": "INTERNAL_ERROR", "message": "An unexpected error occurred."}
     }
     assert "secret" not in response.text

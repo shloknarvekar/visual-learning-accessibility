@@ -4,8 +4,8 @@ export type HealthResponse = {
   status: "ok";
   service: string;
   version: string;
-  /** "mock" when the API has no AI key configured and serves example lessons. */
-  ai_mode: "gemini" | "mock";
+  /** The provider tried first; "mock" when no AI key is configured and lessons are example data. */
+  ai_mode: "gemini" | "openrouter" | "groq" | "mock";
 };
 
 /** Envelope the API returns for every non-2xx response. */
