@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: visual-learning-api
+    runtime: python
+    plan: free
+    rootDir: services/api
+    buildCommand: pip install --upgrade pip && pip install .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      # Must be the exact deployed frontend origin(s), comma-separated, no trailing slash.
+      # e.g. https://your-project.vercel.app  (add the production custom domain too, if any)
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_FALLBACK_PROVIDERS
+        value: openrouter,groq
+      # Free key from https://aistudio.google.com/apikey - do not attach a billing account.
+      - key: GEMINI_API_KEY
+        sync: false
+      # Optional fallback. Free key from https://openrouter.ai/keys
+      - key: OPENROUTER_API_KEY
+        sync: false
+      # Optional fallback. Free key from https://console.groq.com/keys
+      - key: GROQ_API_KEY
+        sync: false
