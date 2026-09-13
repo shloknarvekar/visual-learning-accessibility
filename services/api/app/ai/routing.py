@@ -66,6 +66,10 @@ class RoutingLessonGenerator:
                         "document_id": request.lesson_id,
                         "provider": provider,
                         "error_type": type(exc).__name__,
+                        # LessonAssemblyError's message names exactly which validation failed
+                        # (e.g. "lesson validation failed at: sections"); without it, only the
+                        # exception type reached the logs and the real cause was unrecoverable.
+                        "error_message": str(exc),
                     },
                 )
                 continue
